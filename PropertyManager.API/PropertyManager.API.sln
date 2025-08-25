@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.36414.22 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyManager.API", "PropertyManager.API\PropertyManager.API.csproj", "{87B1E3C5-D944-4613-AB7F-A0FAC771BE0F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyManager.Data", "..\PropertyManager.Data\PropertyManager.Data.csproj", "{44186FAC-A774-4679-BDCA-FEFCF450536E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{87B1E3C5-D944-4613-AB7F-A0FAC771BE0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87B1E3C5-D944-4613-AB7F-A0FAC771BE0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87B1E3C5-D944-4613-AB7F-A0FAC771BE0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{44186FAC-A774-4679-BDCA-FEFCF450536E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{44186FAC-A774-4679-BDCA-FEFCF450536E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{44186FAC-A774-4679-BDCA-FEFCF450536E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{44186FAC-A774-4679-BDCA-FEFCF450536E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
