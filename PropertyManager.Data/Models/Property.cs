@@ -16,7 +16,7 @@ namespace PropertyManager.Data.Models
         public required string Name { get; set; }
         public required string Address { get; set; }
         public int NumberOfUnits { get; set; }
-        public IList<IUnit> Units { get; set; } = new List<IUnit>();
+        public IList<Unit> Units { get; set; } = new List<Unit>();
         public required string Owner { get; set; }
         public required string PropertyType { get; set; }
         public required string Status { get; set; }

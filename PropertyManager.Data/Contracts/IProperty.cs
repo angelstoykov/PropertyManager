@@ -13,6 +13,6 @@ namespace PropertyManager.Data.Contracts
         string Owner { get; set; }
         string PropertyType { get; set; }
         string Status { get; set; }
-        IList<IUnit> Units { get; set; }
+        IList<Unit> Units { get; set; }
     }
 }
