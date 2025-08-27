@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace PropertyManager.Data.Models
 {
-    internal class Unit : IUnit
+    public class Unit : IUnit
     {
         [Key]
         public int Id { get; set; }

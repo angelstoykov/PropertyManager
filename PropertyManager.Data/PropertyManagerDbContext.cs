@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PropertyManager.Data.Contracts;
 using PropertyManager.Data.Models;
 
 namespace PropertyManager.Data
 {
-    public class PropertyManagerDbContext : DbContext
+    public class PropertyManagerDbContext : DbContext, IPropertyManagerDbContext
     {
         public PropertyManagerDbContext(DbContextOptions<PropertyManagerDbContext> options)
             : base(options)
@@ -26,6 +27,6 @@ namespace PropertyManager.Data
             base.OnModelCreating(modelBuilder);
         }
 
-        DbSet<Property> Properties { get; set; }
+        public DbSet<Property> Properties { get; set; }
     }
 }

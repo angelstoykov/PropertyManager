@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PropertyManager.Data.Models
 {
-    internal class Property : IProperty
+    public class Property : IProperty
     {
         [Key]
         public int Id { get; set; }
