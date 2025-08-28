@@ -17,7 +17,7 @@ namespace PropertyManager.API.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            return Ok(_context.Properties.ToList());
+            return Ok(new { name = "pesho" });
         }
     }
 }
