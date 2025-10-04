@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyManager.API", "Prop
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyManager.Data", "PropertyManager.Data\PropertyManager.Data.csproj", "{B0A89AA3-8CE2-34E6-4381-0642934BFCF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PropertyManager.WEB", "PropertyManager.WEB\PropertyManager.WEB.csproj", "{74B26426-1BC7-43BC-8971-9DA415CC0754}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B0A89AA3-8CE2-34E6-4381-0642934BFCF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B0A89AA3-8CE2-34E6-4381-0642934BFCF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0A89AA3-8CE2-34E6-4381-0642934BFCF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74B26426-1BC7-43BC-8971-9DA415CC0754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74B26426-1BC7-43BC-8971-9DA415CC0754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74B26426-1BC7-43BC-8971-9DA415CC0754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74B26426-1BC7-43BC-8971-9DA415CC0754}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
