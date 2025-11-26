@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PropertyManager.Data.Models
+namespace PropertyManager.Data.Models.Entities
 {
     public class Property : IProperty
     {

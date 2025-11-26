@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data.Models;
+using PropertyManager.Data.Models.Entities;
 
 namespace PropertyManager.Data.Contracts
 {

@@ -1,4 +1,6 @@
-﻿namespace PropertyManager.Data.Models
+﻿using PropertyManager.Data.Models.Enums;
+
+namespace PropertyManager.Data.Models.Entities
 {
     public class RentPayment
     {

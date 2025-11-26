@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PropertyManager.Data.Contracts;
+using PropertyManager.Data.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 
-namespace PropertyManager.Data.Models
+namespace PropertyManager.Data.Models.Entities
 {
     public class Unit : IUnit
     {
