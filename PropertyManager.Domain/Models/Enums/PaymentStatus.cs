@@ -1,4 +1,4 @@
-﻿namespace PropertyManager.Data.Models.Enums
+﻿namespace PropertyManager.Domain.Models.Enums
 {
     public enum PaymentStatus
     {

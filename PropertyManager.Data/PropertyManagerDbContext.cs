@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data.Contracts;
-using PropertyManager.Data.Models.Entities;
+using PropertyManager.Domain.Models.Entities;
 using System.Numerics;
 
 namespace PropertyManager.Data

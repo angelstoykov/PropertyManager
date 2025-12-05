@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PropertyManager.Data.Models.Entities;
-using PropertyManager.Data.Models.Enums;
+using PropertyManager.Domain.Models.Entities;
 using PropertyManager.WEB.Models;
 using System.Diagnostics;
 

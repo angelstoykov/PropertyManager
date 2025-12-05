@@ -1,4 +1,4 @@
-﻿namespace PropertyManager.Data.Models.Entities
+﻿namespace PropertyManager.Domain.Models.Entities
 {
     public class Tenant
     {

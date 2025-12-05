@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PropertyManager.Domain.Contracts;
+using System.ComponentModel.DataAnnotations;
 
-namespace PropertyManager.Data.Contracts
+namespace PropertyManager.Domain.Models.Entities
 {
-    internal interface IOwner
+    internal class Owner : IOwner
     {
+        [Key]
         public int Id { get; set; }
         public int OwnerType { get; set; }
         public string Name { get; set; }

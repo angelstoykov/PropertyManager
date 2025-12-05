@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data.Models.Entities;
+using PropertyManager.Domain.Models.Entities;
 
-namespace PropertyManager.Data.Contracts
+namespace PropertyManager.Data
 {
-    interface IPropertyManagerDbContext
+    public interface IPropertyManagerDbContext
     {
         public DbSet<Property> Properties { get; }
 

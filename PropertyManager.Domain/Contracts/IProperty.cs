@@ -1,9 +1,9 @@
-﻿using PropertyManager.Data.Models.Entities;
-using PropertyManager.Data.Models.Enums;
+﻿using PropertyManager.Domain.Models.Entities;
+using PropertyManager.Domain.Models.Enums;
 
-namespace PropertyManager.Data.Contracts
+namespace PropertyManager.Domain.Contracts
 {
-    internal interface IProperty
+    public interface IProperty
     {
         string Address { get; set; }
         string? Description { get; set; }

@@ -1,14 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data.Contracts;
-using PropertyManager.Data.Models.Enums;
-using System;
-using System.Collections.Generic;
+﻿using PropertyManager.Domain.Contracts;
+using PropertyManager.Domain.Models.Enums;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PropertyManager.Data.Models.Entities
+namespace PropertyManager.Domain.Models.Entities
 {
     public class Property : IProperty
     {

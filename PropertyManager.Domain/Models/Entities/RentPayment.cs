@@ -1,6 +1,6 @@
-﻿using PropertyManager.Data.Models.Enums;
+﻿using PropertyManager.Domain.Models.Enums;
 
-namespace PropertyManager.Data.Models.Entities
+namespace PropertyManager.Domain.Models.Entities
 {
     public class RentPayment
     {

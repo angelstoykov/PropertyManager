@@ -1,12 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data.Models.Entities;
-using PropertyManager.Data.Models.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+using PropertyManager.Domain.Models.Entities;
+using PropertyManager.Domain.Models.Enums;
 
 namespace PropertyManager.Data.Infrastructure.Persistence
 {
