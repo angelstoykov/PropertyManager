@@ -1,6 +1,4 @@
-﻿using PropertyManager.Data.Models.Entities;
-
-namespace PropertyManager.Data
+﻿namespace PropertyManager.Data.Models.Entities
 {
     public class Tenant
     {

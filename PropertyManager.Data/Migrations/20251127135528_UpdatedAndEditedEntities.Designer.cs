@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PropertyManager.Data;
 
@@ -11,9 +12,11 @@ using PropertyManager.Data;
 namespace PropertyManager.Data.Migrations
 {
     [DbContext(typeof(PropertyManagerDbContext))]
-    partial class PropertyManagerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251127135528_UpdatedAndEditedEntities")]
+    partial class UpdatedAndEditedEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,7 +60,7 @@ namespace PropertyManager.Data.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Leases");
+                    b.ToTable("Lease");
                 });
 
             modelBuilder.Entity("PropertyManager.Data.Models.Entities.Property", b =>
@@ -89,11 +92,13 @@ namespace PropertyManager.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("PropertyType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -130,41 +135,7 @@ namespace PropertyManager.Data.Migrations
 
                     b.HasIndex("LeaseId");
 
-                    b.ToTable("RentPayments");
-                });
-
-            modelBuilder.Entity("PropertyManager.Data.Models.Entities.Tenant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CompanyNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("IsCompany")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tenants");
+                    b.ToTable("RentPayment");
                 });
 
             modelBuilder.Entity("PropertyManager.Data.Models.Entities.Unit", b =>
@@ -203,9 +174,42 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("Units");
                 });
 
+            modelBuilder.Entity("PropertyManager.Data.Tenant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CompanyNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsCompany")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tenant");
+                });
+
             modelBuilder.Entity("PropertyManager.Data.Models.Entities.Lease", b =>
                 {
-                    b.HasOne("PropertyManager.Data.Models.Entities.Tenant", "Tenant")
+                    b.HasOne("PropertyManager.Data.Tenant", "Tenant")
                         .WithMany("Leases")
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -254,12 +258,12 @@ namespace PropertyManager.Data.Migrations
                     b.Navigation("Units");
                 });
 
-            modelBuilder.Entity("PropertyManager.Data.Models.Entities.Tenant", b =>
+            modelBuilder.Entity("PropertyManager.Data.Models.Entities.Unit", b =>
                 {
                     b.Navigation("Leases");
                 });
 
-            modelBuilder.Entity("PropertyManager.Data.Models.Entities.Unit", b =>
+            modelBuilder.Entity("PropertyManager.Data.Tenant", b =>
                 {
                     b.Navigation("Leases");
                 });

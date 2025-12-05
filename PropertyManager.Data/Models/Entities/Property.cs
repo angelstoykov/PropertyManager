@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PropertyManager.Data.Contracts;
+using PropertyManager.Data.Models.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -18,8 +19,8 @@ namespace PropertyManager.Data.Models.Entities
         public int NumberOfUnits { get; set; }
         public IList<Unit> Units { get; set; } = new List<Unit>();
         public required string Owner { get; set; }
-        public required string PropertyType { get; set; }
-        public required string Status { get; set; }
+        public required PropertyType Type { get; set; }
+        public required PropertyStatus Status { get; set; }
         public string? Notes { get; set; }
         public string? Description { get; set; }
     }

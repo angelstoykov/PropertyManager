@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using PropertyManager.Data.Models.Entities;
+using PropertyManager.Data.Models.Enums;
 using PropertyManager.WEB.Models;
 using System.Diagnostics;
 
@@ -15,7 +17,9 @@ namespace PropertyManager.WEB.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var testList = new List<Property>();
+            
+            return View(testList);
         }
 
         public IActionResult Privacy()

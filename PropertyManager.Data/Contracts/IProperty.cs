@@ -1,4 +1,5 @@
 ﻿using PropertyManager.Data.Models.Entities;
+using PropertyManager.Data.Models.Enums;
 
 namespace PropertyManager.Data.Contracts
 {
@@ -11,8 +12,8 @@ namespace PropertyManager.Data.Contracts
         string? Notes { get; set; }
         int NumberOfUnits { get; set; }
         string Owner { get; set; }
-        string PropertyType { get; set; }
-        string Status { get; set; }
+        PropertyType Type { get; set; }
+        PropertyStatus Status { get; set; }
         IList<Unit> Units { get; set; }
     }
 }

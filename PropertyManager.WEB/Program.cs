@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PropertyManager.Data;
+using PropertyManager.Data.Infrastructure.Persistence;
+using System;
 
 namespace PropertyManager.WEB
 {
@@ -18,6 +20,12 @@ namespace PropertyManager.WEB
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<PropertyManagerDbContext>();
+                DbInitializer.SeedAsync(db);
+            }
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
