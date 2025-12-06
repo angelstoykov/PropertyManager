@@ -11,4 +11,8 @@
     <ProjectReference Include="..\PropertyManager.Domain\PropertyManager.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
+
 </Project>

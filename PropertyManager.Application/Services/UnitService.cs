@@ -43,5 +43,49 @@ namespace PropertyManager.Application.Services
 
             return unit.Id;
         }
+
+        public async Task<PagedResult<UnitListItemDto>> GetPagedAsync(UnitQueryDto query)
+        {
+            var unitsQuery = _context.Units
+                .AsNoTracking()
+                .Include(u => u.Property)
+                .AsQueryable();
+
+            // ✅ ФИЛТРИ
+            if (query.PropertyId.HasValue)
+                unitsQuery = unitsQuery
+                    .Where(u => u.PropertyId == query.PropertyId.Value);
+
+            if (query.Status.HasValue)
+                unitsQuery = unitsQuery
+                    .Where(u => u.Status == query.Status.Value);
+
+            var totalCount = await unitsQuery.CountAsync();
+
+            // ✅ PAGING
+            var items = await unitsQuery
+                .OrderBy(u => u.UnitNumber)
+                .Skip((query.Page - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .Select(u => new UnitListItemDto
+                {
+                    Id = u.Id,
+                    UnitNumber = u.UnitNumber,
+                    PropertyName = u.Property.Name,
+                    Floor = u.Floor,
+                    Area = u.Area,
+                    Status = u.Status
+                })
+                .ToListAsync();
+
+            return new PagedResult<UnitListItemDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = query.Page,
+                PageSize = query.PageSize
+            };
+        }
+
     }
 }

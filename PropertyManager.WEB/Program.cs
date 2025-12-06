@@ -19,6 +19,8 @@ namespace PropertyManager.WEB
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
+            builder.Services.AddHttpClient();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())

@@ -1,5 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
+using PropertyManager.Application.Services;
+using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 
 namespace PropertyManager.API
@@ -19,6 +21,8 @@ namespace PropertyManager.API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddScoped<IUnitService, UnitService>();
 
             var app = builder.Build();
 

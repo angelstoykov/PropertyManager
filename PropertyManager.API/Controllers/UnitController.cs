@@ -19,4 +19,12 @@ public class UnitsController : ControllerBase
         var id = await _unitService.CreateAsync(dto);
         return CreatedAtAction(nameof(Create), new { id }, id);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetPaged([FromQuery] UnitQueryDto query)
+    {
+        var result = await _unitService.GetPagedAsync(query);
+        return Ok(result);
+    }
+
 }
