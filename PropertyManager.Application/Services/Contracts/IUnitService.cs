@@ -1,9 +1,4 @@
 ﻿using PropertyManager.Application.DTOs.Unit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PropertyManager.Application.Services.Contracts
 {
@@ -13,5 +8,8 @@ namespace PropertyManager.Application.Services.Contracts
 
         Task<PagedResult<UnitListItemDto>> GetPagedAsync(UnitQueryDto query);
 
+        Task EditAsync(EditUnitDto dto);
+
+        Task DeleteAsync(int id);
     }
 }

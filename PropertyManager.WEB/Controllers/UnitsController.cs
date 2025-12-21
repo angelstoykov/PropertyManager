@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using PropertyManager.Application.DTOs.Unit;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Enums;
@@ -90,6 +91,64 @@ public class UnitsController : Controller
         if (!response.IsSuccessStatusCode)
         {
             ModelState.AddModelError("", "Error creating unit");
+            return View(model);
+        }
+
+        return RedirectToAction("Index");
+    }
+
+    [HttpGet]
+    public IActionResult Edit(int id)
+    {
+        var unit = _context.Units
+            .Include(u => u.Property)
+            .FirstOrDefault(u => u.Id == id);
+
+        if (unit == null)
+            return NotFound();
+
+        var properties = _context.Properties
+            .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.Name })
+            .ToList();
+
+        var model = new EditUnitViewModel
+        {
+            Id = unit.Id,
+            Type = unit.Type,
+            UnitNumber = unit.UnitNumber,
+            Area = unit.Area,
+            PropertyId = unit.PropertyId,
+            Floor = unit.Floor,
+            Status = unit.Status,
+            Properties = properties
+        };
+
+        return View(model);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Edit(EditUnitViewModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var dto = new EditUnitDto
+        {
+            Id = model.Id,
+            Type = model.Type,
+            UnitNumber = model.UnitNumber,
+            Area = model.Area,
+            PropertyId = model.PropertyId,
+            Floor = model.Floor,
+            Status = model.Status
+        };
+
+        var response = await _httpClient.PutAsJsonAsync(
+            $"https://localhost:7147/api/units/{model.Id}", dto);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            ModelState.AddModelError("", "Error updating unit");
             return View(model);
         }
 

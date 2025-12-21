@@ -27,4 +27,21 @@ public class UnitsController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Edit(int id, [FromBody] EditUnitDto dto)
+    {
+        if (id != dto.Id)
+            return BadRequest();
+
+        await _unitService.EditAsync(dto);
+        return NoContent();
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        await _unitService.DeleteAsync(id);
+        return NoContent();
+    }
+
 }

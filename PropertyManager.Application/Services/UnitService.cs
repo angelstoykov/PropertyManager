@@ -87,5 +87,31 @@ namespace PropertyManager.Application.Services
             };
         }
 
+        public async Task EditAsync(EditUnitDto dto)
+        {
+            var unit = await _context.Units.FindAsync(dto.Id);
+            if (unit == null)
+                throw new Exception("Unit not found.");
+
+            // Update fields
+            unit.Type = dto.Type;
+            unit.UnitNumber = dto.UnitNumber;
+            unit.Area = dto.Area;
+            unit.PropertyId = dto.PropertyId;
+            unit.Floor = dto.Floor;
+            unit.Status = dto.Status;
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var unit = await _context.Units.FindAsync(id);
+            if (unit == null)
+                throw new Exception("Unit not found.");
+
+            _context.Units.Remove(unit);
+            await _context.SaveChangesAsync();
+        }
     }
 }

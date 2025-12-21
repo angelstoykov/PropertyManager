@@ -7,12 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PropertyManager.Data\PropertyManager.Data.csproj" />
-    <ProjectReference Include="..\PropertyManager.Domain\PropertyManager.Domain.csproj" />
+    <Compile Remove="NewFolder\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
+    <None Remove="NewFolder\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="NewFolder\" />
+    <ProjectReference Include="..\PropertyManager.Data\PropertyManager.Data.csproj" />
+    <ProjectReference Include="..\PropertyManager.Domain\PropertyManager.Domain.csproj" />
   </ItemGroup>
 
 </Project>
