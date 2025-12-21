@@ -2,8 +2,9 @@
 
 namespace PropertyManager.WEB.Controllers
 {
+    [ApiController]
     [Route("api-proxy")]
-    public class ApiProxyController : Controller
+    public class ApiProxyController : ControllerBase
     {
         private readonly HttpClient _client;
 
