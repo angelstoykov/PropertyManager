@@ -6,9 +6,9 @@ using PropertyManager.Application.Services.Contracts;
 [Route("api/units")]
 public class UnitsController : ControllerBase
 {
-    private readonly IUnitService _unitService;
+    private readonly IUnitsService _unitService;
 
-    public UnitsController(IUnitService unitService)
+    public UnitsController(IUnitsService unitService)
     {
         _unitService = unitService;
     }

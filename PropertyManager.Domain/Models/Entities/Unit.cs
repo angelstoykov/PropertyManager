@@ -18,7 +18,6 @@ namespace PropertyManager.Domain.Models.Entities
         [Required]
         [Precision(18, 2)]
         public decimal Area { get; set; }
-        ////////
 
         public int PropertyId { get; set; }
         public Property Property { get; set; } = null!;

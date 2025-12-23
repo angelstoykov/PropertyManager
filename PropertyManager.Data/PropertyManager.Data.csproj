@@ -15,4 +15,8 @@
     <ProjectReference Include="..\PropertyManager.Domain\PropertyManager.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configuration\" />
+  </ItemGroup>
+
 </Project>

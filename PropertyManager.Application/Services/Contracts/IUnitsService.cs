@@ -2,7 +2,7 @@
 
 namespace PropertyManager.Application.Services.Contracts
 {
-    public interface IUnitService
+    public interface IUnitsService
     {
         Task<int> CreateAsync(CreateUnitDto dto);
 

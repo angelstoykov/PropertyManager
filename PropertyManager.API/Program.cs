@@ -22,7 +22,7 @@ namespace PropertyManager.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddScoped<IUnitService, UnitService>();
+            builder.Services.AddScoped<IUnitsService, UnitsService>();
 
             var app = builder.Build();
 

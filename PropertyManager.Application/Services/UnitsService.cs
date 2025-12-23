@@ -11,11 +11,11 @@ using System.Threading.Tasks;
 
 namespace PropertyManager.Application.Services
 {
-    public class UnitService : IUnitService
+    public class UnitsService : IUnitsService
     {
         private readonly PropertyManagerDbContext _context;
 
-        public UnitService(PropertyManagerDbContext context)
+        public UnitsService(PropertyManagerDbContext context)
         {
             _context = context;
         }
@@ -106,9 +106,16 @@ namespace PropertyManager.Application.Services
 
         public async Task DeleteAsync(int id)
         {
+            var hasLeases = await _context.Leases
+                .AnyAsync(l => l.UnitId == id);
+
+            if (hasLeases)
+                throw new InvalidOperationException(
+                    "Cannot delete unit with existing leases.");
+
             var unit = await _context.Units.FindAsync(id);
             if (unit == null)
-                throw new Exception("Unit not found.");
+                return;
 
             _context.Units.Remove(unit);
             await _context.SaveChangesAsync();
