@@ -23,6 +23,7 @@ namespace PropertyManager.API
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddScoped<IUnitsService, UnitsService>();
+            builder.Services.AddScoped<IPropertyService, PropertyService>();
 
             var app = builder.Build();
 

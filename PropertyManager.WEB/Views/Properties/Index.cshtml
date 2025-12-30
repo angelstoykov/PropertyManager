@@ -1,0 +1,32 @@
+﻿@using PropertyManager.WEB.ViewModels.Properties
+
+@model IEnumerable<PropertyListItemViewModel>
+
+<h2>Properties</h2>
+
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var property in Model)
+        {
+            <tr>
+                <td>@property.Name</td>
+                <td>@property.Address</td>
+                <td>
+                    <a class="btn btn-sm btn-primary"
+                       asp-controller="Units"
+                       asp-action="Index"
+                       asp-route-propertyId="@property.Id">
+                        View units
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

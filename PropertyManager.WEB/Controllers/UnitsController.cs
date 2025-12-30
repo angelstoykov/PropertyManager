@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManager.Application.DTOs.Unit;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Enums;
+using PropertyManager.WEB.ViewModels.Units;
 
 public class UnitsController : Controller
 {

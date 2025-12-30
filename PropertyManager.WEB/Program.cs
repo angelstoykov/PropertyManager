@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using PropertyManager.Application.Services;
+using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Data.Infrastructure.Persistence;
+using PropertyManager.WEB.ApiClients.Contracts;
 using System;
 
 namespace PropertyManager.WEB
@@ -19,9 +22,9 @@ namespace PropertyManager.WEB
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddHttpClient("Api", client =>
+            builder.Services.AddHttpClient<IPropertyApiClient, PropertyApiClient>(PropertyApiClient =>
             {
-                client.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
+                PropertyApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
             });
 
             var app = builder.Build();
@@ -49,7 +52,7 @@ namespace PropertyManager.WEB
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Units}/{action=Index}/{id?}");
 
             app.Run();
         }
