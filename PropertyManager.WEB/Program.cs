@@ -49,7 +49,7 @@ namespace PropertyManager.WEB
 
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Units}/{action=Index}/{id?}");
+                pattern: "{controller=Properties}/{action=Index}/{id?}");
 
             app.Run();
         }
