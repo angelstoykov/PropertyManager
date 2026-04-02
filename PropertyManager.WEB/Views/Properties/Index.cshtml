@@ -1,8 +1,22 @@
-﻿@using PropertyManager.WEB.ViewModels.Properties
+﻿@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.Properties
 
 @model IEnumerable<PropertyListItemViewModel>
 
 <h2>Properties</h2>
+
+@* <form method="get" class="mb-3">
+    <!-- тука трябва да се направи, че за всяко пропърти да му се показва името-->
+    <select name="propertyId" asp-items="Model.">
+        <option value="">-- Property --</option>
+    </select>
+
+    <select name="status" asp-items="Html.GetEnumSelectList<UnitStatus>()">
+        <option value="">-- Status --</option>
+    </select>
+
+    <button type="submit">Filter</button>
+</form> *@
 
 <table class="table table-hover">
     <thead>
@@ -20,9 +34,9 @@
                 <td>@property.Address</td>
                 <td>
                     <a class="btn btn-sm btn-primary"
-                       asp-controller="Units"
-                       asp-action="Index"
-                       asp-route-propertyId="@property.Id">
+                           asp-controller="Units"
+                           asp-action="Index"
+                           asp-route-propertyId="@property.Id">
                         View units
                     </a>
                 </td>

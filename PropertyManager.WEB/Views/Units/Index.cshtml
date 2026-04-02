@@ -9,18 +9,6 @@
 
 <h2>Units</h2>
 
-<form method="get" class="mb-3">
-    <select name="propertyId" asp-items="Model.Properties">
-        <option value="">-- Property --</option>
-    </select>
-
-    <select name="status" asp-items="Html.GetEnumSelectList<UnitStatus>()">
-        <option value="">-- Status --</option>
-    </select>
-
-    <button type="submit">Filter</button>
-</form>
-
 <table class="table table-bordered">
     <thead>
         <tr>
