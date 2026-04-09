@@ -21,20 +21,21 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model.Units)
+        @foreach (var unit in Model.Units)
         {
             <tr>
-                <td>@item.UnitNumber</td>
-                <td>@item.PropertyName</td>
-                <td>@item.Floor</td>
-                <td>@item.Area</td>
-                <td>@item.Status</td>
+                <td>@unit.UnitNumber</td>
+                <td>@unit.PropertyName</td>
+                <td>@unit.Floor</td>
+                <td>@unit.Area</td>
+                <td>@unit.Status</td>
                 <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Details" asp-route-id="@unit.Id" class="btn btn-sm btn-info">Details</a>
+                    <a asp-action="Edit" asp-route-id="@unit.Id" class="btn btn-sm btn-warning">Edit</a>
                     <!-- TODO: This DELETE functionality should be different -->
                     <button class="btn btn-sm btn-danger js-delete-unit"
-                            data-unit-id="@item.Id"
-                            data-unit-name="@item.UnitNumber">
+                            data-unit-id="@unit.Id"
+                            data-unit-name="@unit.UnitNumber">
                         Delete
                     </button>
                 </td>
