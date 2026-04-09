@@ -1,0 +1,20 @@
+﻿@model UnitDetailsViewModel
+
+<h2>Unit Details</h2>
+
+<div class="card">
+    <div class="card-body">
+
+        <h4>Unit @Model.UnitNumber</h4>
+
+        <p><strong>Property:</strong> @Model.PropertyName</p>
+        <p><strong>Area:</strong> @Model.Area m²</p>
+        <p><strong>Floor:</strong> @Model.Floor</p>
+        <p><strong>Status:</strong> @Model.Status</p>
+
+        <a asp-controller="Units" asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn btn-secondary">
+            Back to Units
+        </a>
+
+    </div>
+</div>

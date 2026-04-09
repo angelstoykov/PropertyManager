@@ -155,4 +155,14 @@ public class UnitsController : Controller
 
         return RedirectToAction("Index", new { propertyId = model.PropertyId });
     }
+
+    public async Task<IActionResult> Details(int id)
+    {
+        var unit = await _unitApiClient.GetByIdAsync(id);
+
+        if (unit == null)
+            return NotFound();
+
+        return View(unit);
+    }
 }
