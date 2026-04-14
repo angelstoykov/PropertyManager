@@ -32,12 +32,7 @@
                 <td>
                     <a asp-action="Details" asp-route-id="@unit.Id" class="btn btn-sm btn-info">Details</a>
                     <a asp-action="Edit" asp-route-id="@unit.Id" class="btn btn-sm btn-warning">Edit</a>
-                    <!-- TODO: This DELETE functionality should be different -->
-                    <button class="btn btn-sm btn-danger js-delete-unit"
-                            data-unit-id="@unit.Id"
-                            data-unit-name="@unit.UnitNumber">
-                        Delete
-                    </button>
+                    <a asp-action="Delete" asp-route-id="@unit.Id" class="btn btn-sm btn-danger">Delete</a>
                 </td>
             </tr>
         }

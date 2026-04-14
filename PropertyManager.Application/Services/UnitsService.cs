@@ -120,5 +120,23 @@ namespace PropertyManager.Application.Services
             _context.Units.Remove(unit);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<UnitDto> GetUnitByIdAsync(int id)
+        {
+            var unit = await _context.Units.FindAsync(id);
+            if (unit == null)
+                throw new Exception("Unit not found.");
+
+            return new UnitDto
+            {
+                Id = unit.Id,
+                Type = unit.Type,
+                UnitNumber = unit.UnitNumber,
+                Area = unit.Area,
+                PropertyId = unit.PropertyId,
+                Floor = unit.Floor,
+                Status = unit.Status
+            };
+        }
     }
 }

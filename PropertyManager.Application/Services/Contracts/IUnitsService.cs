@@ -11,5 +11,7 @@ namespace PropertyManager.Application.Services.Contracts
         Task EditAsync(EditUnitDto dto);
 
         Task DeleteAsync(int id);
+
+        Task<UnitDto> GetUnitByIdAsync(int id);
     }
 }

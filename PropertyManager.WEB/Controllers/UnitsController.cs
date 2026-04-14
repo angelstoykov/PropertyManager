@@ -2,19 +2,20 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using PropertyManager.Application.DTOs.Unit;
+using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ViewModels.Units;
 
 public class UnitsController : Controller
 {
-    private readonly HttpClient _httpClient;
-    private readonly PropertyManagerDbContext _context;
+    private readonly IPropertyService _propertyService;
+    private readonly IUnitsService _unitService;
 
-    public UnitsController(HttpClient httpClient, PropertyManagerDbContext context)
+    public UnitsController(IPropertyService propertyService, IUnitsService unitsService)
     {
-        _httpClient = httpClient;
-        _context = context;
+        _propertyService = propertyService;
+        _unitService = unitsService;
     }
 
     public async Task<IActionResult> Index(int? propertyId, UnitStatus? status, int page = 1)
@@ -27,10 +28,10 @@ public class UnitsController : Controller
             PageSize = 10
         };
 
-        var response = await _httpClient.GetFromJsonAsync<PagedResult<UnitListItemDto>>(
-            $"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
+        var response = await _unitService.GetPagedAsync(query);
+            //$"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
 
-        var properties = _context.Properties
+        var properties = (await _propertyService.GetAllAsync())
             .Select(p => new SelectListItem
             {
                 Value = p.Id.ToString(),
@@ -52,9 +53,9 @@ public class UnitsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create(int id)
+    public  async Task<IActionResult> Create(int id)
     {
-        var properties = _context.Properties
+        var properties = (await _propertyService.GetAllAsync())
             .Where(p => p.Id == id)
             .Select(p => new SelectListItem
             {
@@ -99,16 +100,14 @@ public class UnitsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Edit(int id)
+    public async Task<IActionResult> Edit(int id)
     {
-        var unit = _context.Units
-            .Include(u => u.Property)
-            .FirstOrDefault(u => u.Id == id);
+        var unit = await _unitService.GetUnitByIdAsync(id);
 
         if (unit == null)
             return NotFound();
 
-        var properties = _context.Properties
+        var properties = (await _propertyService.GetAllAsync())
             .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.Name })
             .ToList();
 
@@ -156,13 +155,44 @@ public class UnitsController : Controller
         return RedirectToAction("Index", new { propertyId = model.PropertyId });
     }
 
-    public async Task<IActionResult> Details(int id)
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
     {
-        var unit = await _unitApiClient.GetByIdAsync(id);
+        //if (!User.IsInAdminRole())
+        //{
+        //    return RedirectToAction("NotAuthorized", "Error");
+        //}
 
+        var unit = await _unitService.GetUnitByIdAsync(id);
         if (unit == null)
-            return NotFound();
+        {
+            return RedirectToAction("BadRequest", "Error");
+        }
 
-        return View(unit);
+        var model = new DeleteUnitViewModel()
+        {
+            Id = unit.Id,
+            Type = unit.Type,
+            UnitNumber = unit.UnitNumber
+        };
+
+        return View(model);
     }
+
+    [HttpDelete("units/{id}")]
+    public async Task<IActionResult> DeleteUnit(int id)
+    {
+        var response = await _httpClient.DeleteAsync($"/api/units/{id}");
+        return StatusCode((int)response.StatusCode);
+    }
+
+    //public async Task<IActionResult> Details(int id)
+    //{
+    //    var unit = await _unitApiClient.GetByIdAsync(id);
+
+    //    if (unit == null)
+    //        return NotFound();
+
+    //    return View(unit);
+    //}
 }
