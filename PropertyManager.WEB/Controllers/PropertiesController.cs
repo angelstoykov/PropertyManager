@@ -10,11 +10,11 @@ namespace PropertyManager.WEB.Controllers
 {
     public class PropertiesController : Controller
     {
-        private readonly IUnitsApiClient _propertyApiClient;
+        private readonly IPropertyApiClient _propertyApiClient;
         private readonly HttpClient _httpClient;
         private readonly PropertyManagerDbContext _context;
 
-        public PropertiesController(IUnitsApiClient propertyApiClient, HttpClient httpClient, PropertyManagerDbContext context)
+        public PropertiesController(IPropertyApiClient propertyApiClient, HttpClient httpClient, PropertyManagerDbContext context)
         {
             _propertyApiClient = propertyApiClient;
             _httpClient = httpClient;
