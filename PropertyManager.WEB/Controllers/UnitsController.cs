@@ -39,7 +39,7 @@ public class UnitsController : Controller
             })
             .ToList();
 
-        var model = new UnitIndexViewModel
+        var model = new UnitListViewModel
         {
             Units = response!.Items,
             PropertyId = propertyId,

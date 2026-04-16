@@ -1,7 +1,7 @@
 ﻿using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Properties;
 
-public class PropertyApiClient : IPropertyApiClient
+public class PropertyApiClient : IUnitsApiClient
 {
     private readonly HttpClient _httpClient;
 

@@ -3,7 +3,7 @@ using PropertyManager.Domain.Models.Enums;
 
 namespace PropertyManager.WEB.ViewModels.Units
 {
-    public class UnitIndexViewModel
+    public class UnitListViewModel
     {
         public List<UnitListItemDto> Units { get; set; } = new();
 
