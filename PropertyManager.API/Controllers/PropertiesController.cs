@@ -15,7 +15,7 @@ namespace PropertyManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAllAsync()
         {
             var properties = await _propertyService.GetAllAsync();
             return Ok(properties);
