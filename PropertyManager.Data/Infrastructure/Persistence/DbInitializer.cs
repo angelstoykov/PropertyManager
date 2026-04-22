@@ -10,7 +10,7 @@ namespace PropertyManager.Data.Infrastructure.Persistence
         {
             // ✅ Автоматично прилага миграции
             //await context.Database.MigrateAsync();
-            context.Database.MigrateAsync();
+            await context.Database.MigrateAsync();
 
             // ✅ Ако вече има Properties → не seed-ваме повторно
             if (context.Properties.Any())
@@ -125,7 +125,7 @@ namespace PropertyManager.Data.Infrastructure.Persistence
 
             context.Leases.AddRange(lease1, lease2);
             //await context.SaveChangesAsync();
-            context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             // -----------------------------
             // 💰 PAYMENTS
