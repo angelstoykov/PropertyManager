@@ -19,7 +19,7 @@ namespace PropertyManager.WEB
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddHttpClient<IUnitsApiClient, PropertyApiClient>(PropertyApiClient =>
+            builder.Services.AddHttpClient<IPropertyApiClient, PropertyApiClient>(PropertyApiClient =>
             {
                 PropertyApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
             });
