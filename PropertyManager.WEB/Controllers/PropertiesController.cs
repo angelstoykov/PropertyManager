@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
+using PropertyManager.WEB.ViewModels.Properties;
 using PropertyManager.WEB.ViewModels.Units;
 
 namespace PropertyManager.WEB.Controllers
@@ -23,7 +24,17 @@ namespace PropertyManager.WEB.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var properties = await _propertyApiClient.GetAllAsync();
+            var properties = (await _propertyApiClient.GetAllAsync())
+                .Select(p => new PropertyListItemViewModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Address = p.Address,
+                    Owner = p.Owner,
+                    Type = p.Type
+                })
+                .ToList();
+
             return View(properties);
         }
     }
