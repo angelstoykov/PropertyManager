@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PropertyManager.API.Controllers.Contracts;
 using PropertyManager.Application.Services.Contracts;
 
 namespace PropertyManager.API.Controllers
 {
     [ApiController]
     [Route("api/properties")]
-    public class PropertiesApiController : ControllerBase
+    public class PropertiesApiController : ControllerBase, IPropertiesApiController
     {
         private readonly IPropertyService _propertyService;
 

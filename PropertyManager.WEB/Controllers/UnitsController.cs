@@ -11,11 +11,13 @@ public class UnitsController : Controller
 {
     private readonly IPropertyService _propertyService;
     private readonly IUnitsService _unitService;
+    private readonly HttpClient _httpClient;
 
-    public UnitsController(IPropertyService propertyService, IUnitsService unitsService)
+    public UnitsController(IPropertyService propertyService, IUnitsService unitsService, HttpClient httpClient)
     {
         _propertyService = propertyService;
         _unitService = unitsService;
+        _httpClient = httpClient;
     }
 
     public async Task<IActionResult> Index(int? propertyId, UnitStatus? status, int page = 1)
@@ -179,11 +181,11 @@ public class UnitsController : Controller
         return View(model);
     }
 
-    [HttpDelete("units/{id}")]
-    public async Task<IActionResult> DeleteUnit(int id)
+    [HttpPost]
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        var response = await _httpClient.DeleteAsync($"/api/units/{id}");
-        return StatusCode((int)response.StatusCode);
+        var response = await _httpClient.DeleteAsync($"https://localhost:7147/api/units/{id}");
+        return RedirectToAction("Index","Properties");
     }
 
     //public async Task<IActionResult> Details(int id)

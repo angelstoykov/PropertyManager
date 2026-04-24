@@ -1,5 +1,8 @@
 ﻿using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.Application.DTOs.Properties;
+using PropertyManager.API.Controllers.Contracts;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 
 public class PropertyApiClient : IPropertyApiClient
 {
@@ -12,7 +15,16 @@ public class PropertyApiClient : IPropertyApiClient
 
     public async Task<IEnumerable<PropertyListItemDto>> GetAllAsync()
     {
-        return await _httpClient.GetFromJsonAsync<IEnumerable<PropertyListItemDto>>(
-            "/api/properties");
+        var result = await _httpClient
+            .GetFromJsonAsync<IEnumerable<PropertyListItemDto>>("api/properties")
+            ?? Enumerable.Empty<PropertyListItemDto>();
+        
+        if (!result.Any())
+        {
+            // log response.StatusCode and content
+            return Enumerable.Empty<PropertyListItemDto>();
+        }
+
+        return result;
     }
 }

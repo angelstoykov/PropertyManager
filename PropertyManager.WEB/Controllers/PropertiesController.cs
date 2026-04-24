@@ -12,14 +12,10 @@ namespace PropertyManager.WEB.Controllers
     public class PropertiesController : Controller
     {
         private readonly IPropertyApiClient _propertyApiClient;
-        private readonly HttpClient _httpClient;
-        private readonly PropertyManagerDbContext _context;
 
-        public PropertiesController(IPropertyApiClient propertyApiClient, HttpClient httpClient, PropertyManagerDbContext context)
+        public PropertiesController(IPropertyApiClient propertyApiClient)
         {
             _propertyApiClient = propertyApiClient;
-            _httpClient = httpClient;
-            _context = context;
         }
 
         public async Task<IActionResult> Index()

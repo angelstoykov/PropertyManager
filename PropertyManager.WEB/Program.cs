@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using PropertyManager.API.Controllers;
+using PropertyManager.API.Controllers.Contracts;
 using PropertyManager.Application.Services;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
