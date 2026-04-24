@@ -31,7 +31,7 @@ public class UnitsController : Controller
         };
 
         var response = await _unitService.GetPagedAsync(query);
-            //$"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
+        //$"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
 
         var properties = (await _propertyService.GetAllAsync())
             .Select(p => new SelectListItem
@@ -55,7 +55,7 @@ public class UnitsController : Controller
     }
 
     [HttpGet]
-    public  async Task<IActionResult> Create(int id)
+    public async Task<IActionResult> Create(int id)
     {
         var properties = (await _propertyService.GetAllAsync())
             .Where(p => p.Id == id)
@@ -185,16 +185,29 @@ public class UnitsController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var response = await _httpClient.DeleteAsync($"https://localhost:7147/api/units/{id}");
-        return RedirectToAction("Index","Properties");
+        return RedirectToAction("Index", "Properties");
     }
 
-    //public async Task<IActionResult> Details(int id)
-    //{
-    //    var unit = await _unitApiClient.GetByIdAsync(id);
+    [HttpGet]
+    public async Task<IActionResult> Details(int id)
+    {
+        var unit = await _httpClient.GetFromJsonAsync<UnitDto>(
+            $"https://localhost:7147/api/units/{id}");
 
-    //    if (unit == null)
-    //        return NotFound();
+        if (unit == null)
+            return NotFound();
 
-    //    return View(unit);
-    //}
+        var vm = new UnitDetailsViewModel
+        {
+            Id = unit.Id,
+            Type = unit.Type,
+            UnitNumber = unit.UnitNumber,
+            Area = unit.Area,
+            Floor = unit.Floor,
+            Status = unit.Status.ToString(),
+            PropertyId = unit.PropertyId
+        };
+
+        return View(vm);
+    }
 }
