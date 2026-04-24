@@ -5,6 +5,7 @@ using PropertyManager.Application.Services;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Data.Infrastructure.Persistence;
+using PropertyManager.WEB.ApiClients;
 using PropertyManager.WEB.ApiClients.Contracts;
 
 namespace PropertyManager.WEB
