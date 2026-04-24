@@ -1,30 +1,30 @@
-﻿using PropertyManager.WEB.ApiClients.Contracts;
-using PropertyManager.Application.DTOs.Properties;
-using PropertyManager.API.Controllers.Contracts;
-using Microsoft.IdentityModel.Tokens;
-using System.Linq;
+﻿using PropertyManager.Application.DTOs.Properties;
+using PropertyManager.WEB.ApiClients.Contracts;
 
-public class PropertyApiClient : IPropertyApiClient
+namespace PropertyManager.WEB.ApiClients
 {
-    private readonly HttpClient _httpClient;
-
-    public PropertyApiClient(HttpClient httpClient)
+    public class PropertyApiClient : IPropertyApiClient
     {
-        _httpClient = httpClient;
-    }
+        private readonly HttpClient _httpClient;
 
-    public async Task<IEnumerable<PropertyListItemDto>> GetAllAsync()
-    {
-        var result = await _httpClient
-            .GetFromJsonAsync<IEnumerable<PropertyListItemDto>>("api/properties")
-            ?? Enumerable.Empty<PropertyListItemDto>();
-        
-        if (!result.Any())
+        public PropertyApiClient(HttpClient httpClient)
         {
-            // log response.StatusCode and content
-            return Enumerable.Empty<PropertyListItemDto>();
+            _httpClient = httpClient;
         }
 
-        return result;
+        public async Task<IEnumerable<PropertyListItemDto>> GetAllAsync()
+        {
+            var result = await _httpClient
+                .GetFromJsonAsync<IEnumerable<PropertyListItemDto>>("api/properties")
+                ?? Enumerable.Empty<PropertyListItemDto>();
+
+            if (!result.Any())
+            {
+                // log response.StatusCode and content
+                return Enumerable.Empty<PropertyListItemDto>();
+            }
+
+            return result;
+        }
     }
 }
