@@ -44,7 +44,7 @@ public class UnitsController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet]
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _unitService.GetUnitByIdAsync(id);
