@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using PropertyManager.Application.Services;
+using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Data.Infrastructure.Persistence;
 using PropertyManager.WEB.ApiClients.Contracts;
@@ -23,6 +25,8 @@ namespace PropertyManager.WEB
             {
                 PropertyApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
             });
+            builder.Services.AddScoped<IPropertyService, PropertyService>();
+            builder.Services.AddScoped<IUnitsService, UnitsService>();
 
             var app = builder.Build();
 
