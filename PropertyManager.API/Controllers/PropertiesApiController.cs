@@ -5,11 +5,11 @@ namespace PropertyManager.API.Controllers
 {
     [ApiController]
     [Route("api/properties")]
-    public class PropertiesController : ControllerBase
+    public class PropertiesApiController : ControllerBase
     {
         private readonly IPropertyService _propertyService;
 
-        public PropertiesController(IPropertyService propertyService)
+        public PropertiesApiController(IPropertyService propertyService)
         {
             _propertyService = propertyService;
         }

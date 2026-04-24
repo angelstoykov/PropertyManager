@@ -5,11 +5,11 @@ namespace PropertyManager.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class HomeController : ControllerBase
+    public class HomeApiController : ControllerBase
     {
         private readonly PropertyManagerDbContext _context;
 
-        public HomeController(PropertyManagerDbContext context)
+        public HomeApiController(PropertyManagerDbContext context)
         {
             _context = context;
         }

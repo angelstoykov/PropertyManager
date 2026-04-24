@@ -4,11 +4,11 @@ using PropertyManager.Application.Services.Contracts;
 
 [ApiController]
 [Route("api/units")]
-public class UnitsController : ControllerBase
+public class UnitsApiController : ControllerBase
 {
     private readonly IUnitsService _unitService;
 
-    public UnitsController(IUnitsService unitService)
+    public UnitsApiController(IUnitsService unitService)
     {
         _unitService = unitService;
     }
