@@ -1,21 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using PropertyManager.Application.DTOs.Unit;
 using PropertyManager.Application.Services.Contracts;
-using PropertyManager.Data;
 using PropertyManager.Domain.Models.Enums;
+using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Units;
 
 public class UnitsController : Controller
 {
-    private readonly IPropertyService _propertyService;
+    private readonly IPropertyApiClient _propertyApiClient;
     private readonly IUnitsService _unitService;
     private readonly HttpClient _httpClient;
 
-    public UnitsController(IPropertyService propertyService, IUnitsService unitsService, HttpClient httpClient)
+    public UnitsController(IPropertyApiClient propertyApiClient, IUnitsService unitsService, HttpClient httpClient)
     {
-        _propertyService = propertyService;
+        _propertyApiClient = propertyApiClient;
         _unitService = unitsService;
         _httpClient = httpClient;
     }
@@ -33,7 +32,7 @@ public class UnitsController : Controller
         var response = await _unitService.GetPagedAsync(query);
         //$"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
 
-        var properties = (await _propertyService.GetAllAsync())
+        var properties = (await _propertyApiClient.GetAllAsync())
             .Select(p => new SelectListItem
             {
                 Value = p.Id.ToString(),
@@ -57,7 +56,7 @@ public class UnitsController : Controller
     [HttpGet]
     public async Task<IActionResult> Create(int id)
     {
-        var properties = (await _propertyService.GetAllAsync())
+        var properties = (await _propertyApiClient.GetAllAsync())
             .Where(p => p.Id == id)
             .Select(p => new SelectListItem
             {
@@ -109,7 +108,7 @@ public class UnitsController : Controller
         if (unit == null)
             return NotFound();
 
-        var properties = (await _propertyService.GetAllAsync())
+        var properties = (await _propertyApiClient.GetAllAsync())
             .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.Name })
             .ToList();
 
