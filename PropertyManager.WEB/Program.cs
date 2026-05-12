@@ -1,8 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using PropertyManager.API.Controllers;
-using PropertyManager.API.Controllers.Contracts;
-using PropertyManager.Application.Services;
-using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Data.Infrastructure.Persistence;
 using PropertyManager.WEB.ApiClients;
@@ -12,7 +8,7 @@ namespace PropertyManager.WEB
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +30,7 @@ namespace PropertyManager.WEB
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<PropertyManagerDbContext>();
-                DbInitializer.SeedAsync(db);
+                await DbInitializer.SeedAsync(db);
             }
 
             // Configure the HTTP request pipeline.
@@ -56,7 +52,7 @@ namespace PropertyManager.WEB
                 name: "default",
                 pattern: "{controller=Properties}/{action=Index}/{id?}");
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
