@@ -21,7 +21,7 @@ public class UnitsApiController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetPaged([FromQuery] UnitQueryDto query)
+    public async Task<IActionResult> GetPagedAsync([FromQuery] UnitQueryDto query)
     {
         var result = await _unitService.GetPagedAsync(query);
         return Ok(result);
@@ -45,7 +45,7 @@ public class UnitsApiController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(int id)
+    public async Task<IActionResult> GetUnitById(int id)
     {
         var result = await _unitService.GetUnitByIdAsync(id);
         return Ok(result);

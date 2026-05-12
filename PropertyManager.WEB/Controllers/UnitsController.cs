@@ -9,13 +9,13 @@ using PropertyManager.WEB.ViewModels.Units;
 public class UnitsController : Controller
 {
     private readonly IPropertyApiClient _propertyApiClient;
-    private readonly IUnitsService _unitService;
+    private readonly IUnitsApiClient _unitsApiClient;
     private readonly HttpClient _httpClient;
 
-    public UnitsController(IPropertyApiClient propertyApiClient, IUnitsService unitsService, HttpClient httpClient)
+    public UnitsController(IPropertyApiClient propertyApiClient, IUnitsApiClient unitsApiClient, HttpClient httpClient)
     {
         _propertyApiClient = propertyApiClient;
-        _unitService = unitsService;
+        _unitsApiClient = unitsApiClient;
         _httpClient = httpClient;
     }
 
@@ -29,8 +29,7 @@ public class UnitsController : Controller
             PageSize = 10
         };
 
-        var response = await _unitService.GetPagedAsync(query);
-        //$"https://localhost:7147/api/units?propertyId={propertyId}&status={status}&page={page}&pageSize=10");
+        var response = await _unitsApiClient.GetPagedAsync(query);
 
         var properties = (await _propertyApiClient.GetAllAsync())
             .Select(p => new SelectListItem
@@ -42,7 +41,7 @@ public class UnitsController : Controller
 
         var model = new UnitListViewModel
         {
-            Units = response!.Items,
+            Units = response.Items,
             PropertyId = propertyId,
             Status = status,
             Properties = properties,
@@ -103,7 +102,7 @@ public class UnitsController : Controller
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
-        var unit = await _unitService.GetUnitByIdAsync(id);
+        var unit = await _unitsApiClient.GetUnitByIdAsync(id);
 
         if (unit == null)
             return NotFound();
@@ -164,7 +163,7 @@ public class UnitsController : Controller
         //    return RedirectToAction("NotAuthorized", "Error");
         //}
 
-        var unit = await _unitService.GetUnitByIdAsync(id);
+        var unit = await _unitsApiClient.GetUnitByIdAsync(id);
         if (unit == null)
         {
             return RedirectToAction("BadRequest", "Error");
