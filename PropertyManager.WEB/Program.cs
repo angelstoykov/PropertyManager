@@ -28,8 +28,6 @@ namespace PropertyManager.WEB
             {
                 PropertyApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
             });
-            builder.Services.AddScoped<IPropertyService, PropertyService>();
-            builder.Services.AddScoped<IUnitsService, UnitsService>();
 
             var app = builder.Build();
 
