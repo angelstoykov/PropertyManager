@@ -24,6 +24,10 @@ namespace PropertyManager.WEB
             {
                 PropertyApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
             });
+            builder.Services.AddHttpClient<IUnitsApiClient, UnitsApiClient>(UnitsApiClient =>
+            {
+                UnitsApiClient.BaseAddress = new Uri(builder.Configuration["Api:BaseUrl"]!);
+            });
 
             var app = builder.Build();
 

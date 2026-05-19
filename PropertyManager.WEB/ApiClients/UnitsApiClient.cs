@@ -20,7 +20,7 @@ public class UnitsApiClient : IUnitsApiClient
     public async Task<PagedResult<UnitListItemDto>> GetPagedAsync(UnitQueryDto query)
     {
         return await _httpClient.GetFromJsonAsync<PagedResult<UnitListItemDto>>(
-            $"/api/units/paged?propertyId={query.PropertyId}&status={query.Status}&page={query.Page}&pageSize={query.PageSize}");
+            $"/api/units?propertyId={query.PropertyId}&status={query.Status}&page={query.Page}&pageSize={query.PageSize}");
     }
 
     public async Task<UnitDto> GetUnitByIdAsync(int id)
