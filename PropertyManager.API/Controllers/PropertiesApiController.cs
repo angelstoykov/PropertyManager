@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PropertyManager.API.Controllers.Contracts;
+using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Application.Services.Contracts;
 
 namespace PropertyManager.API.Controllers
@@ -20,6 +21,13 @@ namespace PropertyManager.API.Controllers
         {
             var properties = await _propertyService.GetAllAsync();
             return Ok(properties);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreatePropertyDto dto)
+        {
+            var id = await _propertyService.CreateAsync(dto);
+            return CreatedAtAction(nameof(Create), new { id }, id);
         }
     }
 }

@@ -1,15 +1,14 @@
-﻿using PropertyManager.Domain.Models.Entities;
-using PropertyManager.Domain.Models.Enums;
+﻿using PropertyManager.Domain.Models.Enums;
 
-namespace PropertyManager.WEB.ViewModels.Properties
+namespace PropertyManager.Application.DTOs.Properties
 {
-    public class CreatePropertyViewModel
+    public class CreatePropertyDto
     {
         public int Id { get; set; }
         public required string Name { get; set; }
         public required string Address { get; set; }
         public int NumberOfUnits { get; set; }
-        public IList<Unit> Units { get; set; } = new List<Unit>();
+        //public IList<Unit> Units { get; set; } = new List<Unit>();
         public required string Owner { get; set; }
         public required PropertyType Type { get; set; }
         public required PropertyStatus Status { get; set; }

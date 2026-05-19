@@ -26,5 +26,11 @@ namespace PropertyManager.WEB.ApiClients
 
             return result;
         }
+
+        public async Task CreatePropertyAsync(CreatePropertyDto model)
+        {
+            var response = await _httpClient.PostAsJsonAsync("/api/properties", model);
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

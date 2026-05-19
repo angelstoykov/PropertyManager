@@ -5,4 +5,5 @@ namespace PropertyManager.Application.Services.Contracts;
 public interface IPropertyService
 {
     Task<IEnumerable<PropertyListItemDto>> GetAllAsync();
+    Task<int> CreateAsync(CreatePropertyDto dto);
 }

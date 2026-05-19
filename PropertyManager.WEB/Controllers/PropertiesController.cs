@@ -1,11 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using PropertyManager.Data;
+using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Properties;
-using PropertyManager.WEB.ViewModels.Units;
 
 namespace PropertyManager.WEB.Controllers
 {
@@ -32,6 +29,53 @@ namespace PropertyManager.WEB.Controllers
                 .ToList();
 
             return View(properties);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var model = new CreatePropertyViewModel
+            {
+                Name = string.Empty,
+                Address = string.Empty,
+                Owner = string.Empty,
+                Type = PropertyType.Residential,
+                Status = PropertyStatus.Active
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(CreatePropertyViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var dto = new CreatePropertyDto
+            {
+                Name = model.Name,
+                Address = model.Address,
+                NumberOfUnits = model.NumberOfUnits,
+                Owner = model.Owner,
+                Type = PropertyType.Residential,
+                Status = PropertyStatus.Active,
+                Notes = model.Notes,
+                Description = model.Description
+            };
+
+            try
+            {
+                await _propertyApiClient.CreatePropertyAsync(dto);
+            }
+            catch
+            {
+                ModelState.AddModelError("", "Error creating property");
+                return View(model);
+            }
+
+            //return RedirectToAction("Index", new { propertyId = model.PropertyId });
+            return RedirectToAction("Index");
         }
     }
 }

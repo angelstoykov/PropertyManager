@@ -5,5 +5,6 @@ namespace PropertyManager.WEB.ApiClients.Contracts
     public interface IPropertyApiClient
     {
         Task<IEnumerable<PropertyListItemDto>> GetAllAsync();
+        Task CreatePropertyAsync(CreatePropertyDto model);
     }
 }
