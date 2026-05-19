@@ -10,5 +10,7 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task<PagedResult<UnitListItemDto>> GetPagedAsync(UnitQueryDto query);
 
         Task<UnitDto> GetUnitByIdAsync(int id);
+
+        Task CreateUnitAsync(CreateUnitDto model);
     }
 }

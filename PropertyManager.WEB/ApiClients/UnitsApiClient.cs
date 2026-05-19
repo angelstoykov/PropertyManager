@@ -28,4 +28,10 @@ public class UnitsApiClient : IUnitsApiClient
         return await _httpClient.GetFromJsonAsync<UnitDto>(
             $"/api/units/{id}");
     }
+
+    public async Task CreateUnitAsync(CreateUnitDto model)
+    {
+        var response = await _httpClient.PostAsJsonAsync("/api/units", model);
+        response.EnsureSuccessStatusCode();
+    }
 }

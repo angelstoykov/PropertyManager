@@ -87,10 +87,11 @@ public class UnitsController : Controller
             Status = model.Status
         };
 
-        var response = await _httpClient.PostAsJsonAsync(
-            "https://localhost:7147/api/units", dto);
-
-        if (!response.IsSuccessStatusCode)
+        try
+        {
+            await _unitsApiClient.CreateUnitAsync(dto);
+        }
+        catch
         {
             ModelState.AddModelError("", "Error creating unit");
             return View(model);
