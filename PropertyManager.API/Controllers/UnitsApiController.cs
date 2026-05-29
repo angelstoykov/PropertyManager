@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PropertyManager.Application.DTOs.Unit;
 using PropertyManager.Application.Services.Contracts;
 
 [ApiController]
 [Route("api/units")]
+[Authorize]
 public class UnitsApiController : ControllerBase
 {
     private readonly IUnitsService _unitService;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManager.Domain.Models.Entities;
 using PropertyManager.WEB.Models;
@@ -5,6 +6,7 @@ using System.Diagnostics;
 
 namespace PropertyManager.WEB.Controllers
 {
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

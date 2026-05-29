@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using PropertyManager.Data.Identity;
 using PropertyManager.Domain.Models.Entities;
-using System.Numerics;
 
 namespace PropertyManager.Data
 {
-    public class PropertyManagerDbContext : DbContext, IPropertyManagerDbContext
+    public class PropertyManagerDbContext : IdentityDbContext<ApplicationUser>, IPropertyManagerDbContext
     {
         public PropertyManagerDbContext(DbContextOptions<PropertyManagerDbContext> options)
             : base(options)
