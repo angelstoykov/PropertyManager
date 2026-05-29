@@ -143,9 +143,8 @@ public class UnitsController : Controller
             Floor = model.Floor,
             Status = model.Status
         };
-        // TODO: use api
-        var response = await _httpClient.PutAsJsonAsync(
-            $"https://localhost:7147/api/units/{model.Id}", dto);
+
+        var response = await _unitsApiClient.UpdateUnitAsync(dto);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -183,8 +182,8 @@ public class UnitsController : Controller
     [HttpPost]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
-        // TODO: use api
-        var response = await _httpClient.DeleteAsync($"https://localhost:7147/api/units/{id}");
+        await _unitsApiClient.DeleteUnitById(id);
+
         return RedirectToAction("Index", "Properties");
     }
 

@@ -12,5 +12,9 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task<UnitDto> GetUnitByIdAsync(int id);
 
         Task CreateUnitAsync(CreateUnitDto model);
+
+        Task DeleteUnitById(int id);
+
+        Task<HttpResponseMessage> UpdateUnitAsync(EditUnitDto model);
     }
 }
