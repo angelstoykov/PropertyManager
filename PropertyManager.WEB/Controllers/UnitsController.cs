@@ -191,8 +191,7 @@ public class UnitsController : Controller
     [HttpGet]
     public async Task<IActionResult> Details(int id)
     {
-        var unit = await _httpClient.GetFromJsonAsync<UnitDto>(
-            $"https://localhost:7147/api/units/{id}");
+        var unit = await _unitsApiClient.GetUnitByIdAsync(id);
 
         if (unit == null)
             return NotFound();
