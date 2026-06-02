@@ -1,0 +1,65 @@
+@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.Clients
+
+@model ClientRentedPropertiesViewModel
+
+<h2>Rented Properties</h2>
+
+<div class="mb-3">
+    <strong>Client:</strong> @Model.ClientDisplayName
+    <span class="ms-2 badge bg-secondary">@(Model.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</span>
+</div>
+
+<form asp-action="AddRentedProperty" method="post" class="row g-2 align-items-end mb-4">
+    <input type="hidden" name="clientId" value="@Model.ClientId" />
+    <div class="col-md-8">
+        <label class="form-label">Available properties</label>
+        <select name="propertyId" class="form-select" required>
+            <option value="">-- Select property --</option>
+            @foreach (var property in Model.AvailableProperties)
+            {
+                <option value="@property.Id">@property.Name - @property.Address</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <button type="submit" class="btn btn-primary">Add Property</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.RentedProperties.Any())
+        {
+            <tr>
+                <td colspan="3" class="text-muted">No rented properties linked yet.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var property in Model.RentedProperties)
+            {
+                <tr>
+                    <td>@property.Name</td>
+                    <td>@property.Address</td>
+                    <td>
+                        <form asp-action="RemoveRentedProperty" method="post">
+                            <input type="hidden" name="clientId" value="@Model.ClientId" />
+                            <input type="hidden" name="propertyId" value="@property.PropertyId" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Back</a>

@@ -46,5 +46,23 @@ namespace PropertyManager.WEB.ApiClients
             var response = await _httpClient.DeleteAsync($"{Api}/{id}");
             response.EnsureSuccessStatusCode();
         }
+
+        public async Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId)
+        {
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientRentedPropertyDto>>($"{Api}/{clientId}/properties");
+            return result ?? Array.Empty<ClientRentedPropertyDto>();
+        }
+
+        public async Task AddRentedPropertyAsync(int clientId, int propertyId)
+        {
+            var response = await _httpClient.PostAsync($"{Api}/{clientId}/properties/{propertyId}", content: null);
+            response.EnsureSuccessStatusCode();
+        }
+
+        public async Task RemoveRentedPropertyAsync(int clientId, int propertyId)
+        {
+            var response = await _httpClient.DeleteAsync($"{Api}/{clientId}/properties/{propertyId}");
+            response.EnsureSuccessStatusCode();
+        }
     }
 }

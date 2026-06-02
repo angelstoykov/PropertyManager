@@ -24,6 +24,10 @@ namespace PropertyManager.Data
                 entity.Property(e => e.Owner).IsRequired();
                 entity.Property(e => e.Type).IsRequired();
                 entity.Property(e => e.Status).IsRequired();
+
+                entity.HasMany(e => e.RentingClients)
+                    .WithMany(c => c.RentedProperties)
+                    .UsingEntity("ClientProperty");
             });
 
             // Unit entity configuration

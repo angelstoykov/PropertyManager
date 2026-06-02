@@ -17,5 +17,7 @@ namespace PropertyManager.Domain.Models.Entities
         public required PropertyStatus Status { get; set; }
         public string? Notes { get; set; }
         public string? Description { get; set; }
+
+        public IList<Client> RentingClients { get; set; } = new List<Client>();
     }
 }

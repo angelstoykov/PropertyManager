@@ -9,5 +9,8 @@ namespace PropertyManager.Application.Services.Contracts
         Task<int> CreateAsync(CreateClientDto dto);
         Task EditAsync(EditClientDto dto);
         Task DeleteAsync(int id);
+        Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId);
+        Task AddRentedPropertyAsync(int clientId, int propertyId);
+        Task RemoveRentedPropertyAsync(int clientId, int propertyId);
     }
 }

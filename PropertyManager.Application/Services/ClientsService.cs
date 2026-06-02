@@ -105,6 +105,64 @@ namespace PropertyManager.Application.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId)
+        {
+            var clientExists = await _context.Clients.AnyAsync(c => c.Id == clientId);
+            if (!clientExists)
+                throw new InvalidOperationException("Client not found.");
+
+            return await _context.Clients
+                .AsNoTracking()
+                .Where(c => c.Id == clientId)
+                .SelectMany(c => c.RentedProperties)
+                .OrderBy(p => p.Name)
+                .Select(p => new ClientRentedPropertyDto
+                {
+                    PropertyId = p.Id,
+                    Name = p.Name,
+                    Address = p.Address
+                })
+                .ToListAsync();
+        }
+
+        public async Task AddRentedPropertyAsync(int clientId, int propertyId)
+        {
+            var client = await _context.Clients
+                .Include(c => c.RentedProperties)
+                .FirstOrDefaultAsync(c => c.Id == clientId);
+
+            if (client == null)
+                throw new InvalidOperationException("Client not found.");
+
+            var property = await _context.Properties.FindAsync(propertyId);
+            if (property == null)
+                throw new InvalidOperationException("Property not found.");
+
+            var isAlreadyAdded = client.RentedProperties.Any(p => p.Id == propertyId);
+            if (isAlreadyAdded)
+                return;
+
+            client.RentedProperties.Add(property);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveRentedPropertyAsync(int clientId, int propertyId)
+        {
+            var client = await _context.Clients
+                .Include(c => c.RentedProperties)
+                .FirstOrDefaultAsync(c => c.Id == clientId);
+
+            if (client == null)
+                throw new InvalidOperationException("Client not found.");
+
+            var property = client.RentedProperties.FirstOrDefault(p => p.Id == propertyId);
+            if (property == null)
+                return;
+
+            client.RentedProperties.Remove(property);
+            await _context.SaveChangesAsync();
+        }
+
         private static void ValidateClientFields(
             ClientType clientType,
             string? firstName,

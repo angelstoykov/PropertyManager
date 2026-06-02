@@ -57,5 +57,26 @@ namespace PropertyManager.API.Controllers
             await _clientsService.DeleteAsync(id);
             return NoContent();
         }
+
+        [HttpGet("{id}/properties")]
+        public async Task<IActionResult> GetRentedProperties(int id)
+        {
+            var properties = await _clientsService.GetRentedPropertiesAsync(id);
+            return Ok(properties);
+        }
+
+        [HttpPost("{id}/properties/{propertyId}")]
+        public async Task<IActionResult> AddRentedProperty(int id, int propertyId)
+        {
+            await _clientsService.AddRentedPropertyAsync(id, propertyId);
+            return NoContent();
+        }
+
+        [HttpDelete("{id}/properties/{propertyId}")]
+        public async Task<IActionResult> RemoveRentedProperty(int id, int propertyId)
+        {
+            await _clientsService.RemoveRentedPropertyAsync(id, propertyId);
+            return NoContent();
+        }
     }
 }

@@ -9,10 +9,12 @@ namespace PropertyManager.WEB.Controllers
     public class ClientsController : Controller
     {
         private readonly IClientsApiClient _clientsApiClient;
+        private readonly IPropertyApiClient _propertyApiClient;
 
-        public ClientsController(IClientsApiClient clientsApiClient)
+        public ClientsController(IClientsApiClient clientsApiClient, IPropertyApiClient propertyApiClient)
         {
             _clientsApiClient = clientsApiClient;
+            _propertyApiClient = propertyApiClient;
         }
 
         public async Task<IActionResult> Index()
@@ -126,6 +128,30 @@ namespace PropertyManager.WEB.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> RentedProperties(int id)
+        {
+            var client = await _clientsApiClient.GetByIdAsync(id);
+            if (client == null)
+                return NotFound();
+
+            return View(await BuildRentedPropertiesViewModelAsync(client));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddRentedProperty(int clientId, int propertyId)
+        {
+            await _clientsApiClient.AddRentedPropertyAsync(clientId, propertyId);
+            return RedirectToAction(nameof(RentedProperties), new { id = clientId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveRentedProperty(int clientId, int propertyId)
+        {
+            await _clientsApiClient.RemoveRentedPropertyAsync(clientId, propertyId);
+            return RedirectToAction(nameof(RentedProperties), new { id = clientId });
+        }
+
         private static CreateClientDto MapToCreateDto(ClientFormViewModel model) => new()
         {
             ClientType = model.ClientType,
@@ -174,5 +200,25 @@ namespace PropertyManager.WEB.Controllers
             client.ClientType == ClientType.LegalEntity
                 ? client.CompanyName ?? string.Empty
                 : $"{client.FirstName} {client.LastName}".Trim();
+
+        private async Task<ClientRentedPropertiesViewModel> BuildRentedPropertiesViewModelAsync(ClientDto client)
+        {
+            var rentedProperties = await _clientsApiClient.GetRentedPropertiesAsync(client.Id);
+            var allProperties = (await _propertyApiClient.GetAllAsync()).ToList();
+            var rentedPropertyIds = rentedProperties.Select(rp => rp.PropertyId).ToHashSet();
+            var availableProperties = allProperties
+                .Where(p => !rentedPropertyIds.Contains(p.Id))
+                .OrderBy(p => p.Name)
+                .ToList();
+
+            return new ClientRentedPropertiesViewModel
+            {
+                ClientId = client.Id,
+                ClientType = client.ClientType,
+                ClientDisplayName = GetDisplayName(client),
+                RentedProperties = rentedProperties,
+                AvailableProperties = availableProperties
+            };
+        }
     }
 }
