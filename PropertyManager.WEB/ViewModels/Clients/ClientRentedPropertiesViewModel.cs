@@ -4,13 +4,13 @@ using PropertyManager.Domain.Models.Enums;
 
 namespace PropertyManager.WEB.ViewModels.Clients
 {
-    public class ClientRentedPropertiesViewModel
+    public class ClientRentedUnitsViewModel
     {
         public int ClientId { get; set; }
         public string ClientDisplayName { get; set; } = string.Empty;
         public ClientType ClientType { get; set; }
         public int? PropertyIdToAdd { get; set; }
-        public IReadOnlyList<ClientRentedPropertyDto> RentedProperties { get; set; } = Array.Empty<ClientRentedPropertyDto>();
+        public IReadOnlyList<ClientRentedUnitDto> RentedUnits { get; set; } = Array.Empty<ClientRentedUnitDto>();
         public IReadOnlyList<PropertyListItemDto> AvailableProperties { get; set; } = Array.Empty<PropertyListItemDto>();
     }
 }

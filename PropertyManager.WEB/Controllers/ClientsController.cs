@@ -129,27 +129,27 @@ namespace PropertyManager.WEB.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> RentedProperties(int id)
+        public async Task<IActionResult> RentedUnits(int id)
         {
             var client = await _clientsApiClient.GetByIdAsync(id);
             if (client == null)
                 return NotFound();
 
-            return View(await BuildRentedPropertiesViewModelAsync(client));
+            return View(await BuildRentedUnitsViewModelAsync(client));
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddRentedProperty(int clientId, int propertyId)
+        public async Task<IActionResult> AddRentedUnit(int clientId, int unitId)
         {
-            await _clientsApiClient.AddRentedPropertyAsync(clientId, propertyId);
-            return RedirectToAction(nameof(RentedProperties), new { id = clientId });
+            await _clientsApiClient.AddRentedUnitAsync(clientId, unitId);
+            return RedirectToAction(nameof(RentedUnits), new { id = clientId });
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveRentedProperty(int clientId, int propertyId)
+        public async Task<IActionResult> RemoveRentedUnit(int clientId, int unitId)
         {
-            await _clientsApiClient.RemoveRentedPropertyAsync(clientId, propertyId);
-            return RedirectToAction(nameof(RentedProperties), new { id = clientId });
+            await _clientsApiClient.RemoveRentedUnitAsync(clientId, unitId);
+            return RedirectToAction(nameof(RentedUnits), new { id = clientId });
         }
 
         private static CreateClientDto MapToCreateDto(ClientFormViewModel model) => new()
@@ -201,22 +201,19 @@ namespace PropertyManager.WEB.Controllers
                 ? client.CompanyName ?? string.Empty
                 : $"{client.FirstName} {client.LastName}".Trim();
 
-        private async Task<ClientRentedPropertiesViewModel> BuildRentedPropertiesViewModelAsync(ClientDto client)
+        private async Task<ClientRentedUnitsViewModel> BuildRentedUnitsViewModelAsync(ClientDto client)
         {
-            var rentedProperties = await _clientsApiClient.GetRentedPropertiesAsync(client.Id);
-            var allProperties = (await _propertyApiClient.GetAllAsync()).ToList();
-            var rentedPropertyIds = rentedProperties.Select(rp => rp.PropertyId).ToHashSet();
-            var availableProperties = allProperties
-                .Where(p => !rentedPropertyIds.Contains(p.Id))
-                .OrderBy(p => p.Name)
-                .ToList();
+            // TODO: refactor this to return only available units (which are not rented)
+            var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(client.Id);
 
-            return new ClientRentedPropertiesViewModel
+            var availableProperties = (await _propertyApiClient.GetAllAsync()).ToList();    
+
+            return new ClientRentedUnitsViewModel
             {
                 ClientId = client.Id,
                 ClientType = client.ClientType,
                 ClientDisplayName = GetDisplayName(client),
-                RentedProperties = rentedProperties,
+                RentedUnits = rentedUnits,
                 AvailableProperties = availableProperties
             };
         }

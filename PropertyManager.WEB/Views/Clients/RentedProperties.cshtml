@@ -1,24 +1,27 @@
 @using PropertyManager.Domain.Models.Enums
 @using PropertyManager.WEB.ViewModels.Clients
 
-@model ClientRentedPropertiesViewModel
+@model ClientRentedUnitsViewModel
 
-<h2>Rented Properties</h2>
+<h2>Rented Units</h2>
 
 <div class="mb-3">
     <strong>Client:</strong> @Model.ClientDisplayName
     <span class="ms-2 badge bg-secondary">@(Model.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</span>
 </div>
 
-<form asp-action="AddRentedProperty" method="post" class="row g-2 align-items-end mb-4">
+<form asp-action="AddRentedUnit" method="post" class="row g-2 align-items-end mb-4">
     <input type="hidden" name="clientId" value="@Model.ClientId" />
     <div class="col-md-8">
-        <label class="form-label">Available properties</label>
+        <label class="form-label">Available units</label>
         <select name="propertyId" class="form-select" required>
             <option value="">-- Select property --</option>
             @foreach (var property in Model.AvailableProperties)
             {
-                <option value="@property.Id">@property.Name - @property.Address</option>
+                @foreach (var unit in Model.AvailableProperties)
+                {
+                    <option value="@unit.Id">@unit.Name - @property.Address</option>
+                }
             }
         </select>
     </div>
@@ -36,23 +39,23 @@
         </tr>
     </thead>
     <tbody>
-        @if (!Model.RentedProperties.Any())
+        @if (!Model.RentedUnits.Any())
         {
             <tr>
-                <td colspan="3" class="text-muted">No rented properties linked yet.</td>
+                <td colspan="3" class="text-muted">No rented units linked yet.</td>
             </tr>
         }
         else
         {
-            @foreach (var property in Model.RentedProperties)
+            @foreach (var property in Model.RentedUnits)
             {
                 <tr>
                     <td>@property.Name</td>
                     <td>@property.Address</td>
                     <td>
-                        <form asp-action="RemoveRentedProperty" method="post">
+                        <form asp-action="RemoveRentedUnit" method="post">
                             <input type="hidden" name="clientId" value="@Model.ClientId" />
-                            <input type="hidden" name="propertyId" value="@property.PropertyId" />
+                            <input type="hidden" name="unitId" value="@property.UnitId" />
                             <button type="submit" class="btn btn-sm btn-danger">Remove</button>
                         </form>
                     </td>

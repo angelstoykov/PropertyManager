@@ -6,7 +6,7 @@ namespace PropertyManager.WEB.ApiClients
     public class ClientsApiClient : IClientsApiClient
     {
         private readonly HttpClient _httpClient;
-        private const string Api = "/api/clients";
+        private const string api = "/api/clients";
 
         public ClientsApiClient(HttpClient httpClient)
         {
@@ -15,13 +15,13 @@ namespace PropertyManager.WEB.ApiClients
 
         public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync()
         {
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientListItemDto>>(Api);
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientListItemDto>>(api);
             return result ?? Array.Empty<ClientListItemDto>();
         }
 
         public async Task<ClientDto?> GetByIdAsync(int id)
         {
-            var response = await _httpClient.GetAsync($"{Api}/{id}");
+            var response = await _httpClient.GetAsync($"{api}/{id}");
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return null;
 
@@ -31,37 +31,37 @@ namespace PropertyManager.WEB.ApiClients
 
         public async Task CreateAsync(CreateClientDto dto)
         {
-            var response = await _httpClient.PostAsJsonAsync(Api, dto);
+            var response = await _httpClient.PostAsJsonAsync(api, dto);
             response.EnsureSuccessStatusCode();
         }
 
         public async Task<HttpResponseMessage> UpdateAsync(EditClientDto dto)
         {
-            var response = await _httpClient.PutAsJsonAsync($"{Api}/{dto.Id}", dto);
+            var response = await _httpClient.PutAsJsonAsync($"{api}/{dto.Id}", dto);
             return response.EnsureSuccessStatusCode();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var response = await _httpClient.DeleteAsync($"{Api}/{id}");
+            var response = await _httpClient.DeleteAsync($"{api}/{id}");
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId)
+        public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)
         {
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientRentedPropertyDto>>($"{Api}/{clientId}/properties");
-            return result ?? Array.Empty<ClientRentedPropertyDto>();
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientRentedUnitDto>>($"{api}/{clientId}/units");
+            return result ?? Array.Empty<ClientRentedUnitDto>();
         }
 
-        public async Task AddRentedPropertyAsync(int clientId, int propertyId)
+        public async Task AddRentedUnitAsync(int clientId, int unitId)
         {
-            var response = await _httpClient.PostAsync($"{Api}/{clientId}/properties/{propertyId}", content: null);
+            var response = await _httpClient.PostAsync($"{api}/{clientId}/units/{unitId}", content: null);
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task RemoveRentedPropertyAsync(int clientId, int propertyId)
+        public async Task RemoveRentedUnitAsync(int clientId, int unitId)
         {
-            var response = await _httpClient.DeleteAsync($"{Api}/{clientId}/properties/{propertyId}");
+            var response = await _httpClient.DeleteAsync($"{api}/{clientId}/units/{unitId}");
             response.EnsureSuccessStatusCode();
         }
     }

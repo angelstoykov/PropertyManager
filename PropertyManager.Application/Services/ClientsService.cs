@@ -105,7 +105,7 @@ namespace PropertyManager.Application.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId)
+        public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)
         {
             var clientExists = await _context.Clients.AnyAsync(c => c.Id == clientId);
             if (!clientExists)
@@ -114,52 +114,52 @@ namespace PropertyManager.Application.Services
             return await _context.Clients
                 .AsNoTracking()
                 .Where(c => c.Id == clientId)
-                .SelectMany(c => c.RentedProperties)
-                .OrderBy(p => p.Name)
-                .Select(p => new ClientRentedPropertyDto
+                .SelectMany(c => c.ClientUnits.Select(cu => cu.Unit))
+                .Select(p => new ClientRentedUnitDto
                 {
-                    PropertyId = p.Id,
-                    Name = p.Name,
-                    Address = p.Address
+                    UnitId = p.Id,
+                    Name = p.Property.Name,
+                    Address = p.Property.Address
                 })
                 .ToListAsync();
         }
 
-        public async Task AddRentedPropertyAsync(int clientId, int propertyId)
+        public async Task AddRentedUnitAsync(int clientId, int unitId)
         {
             var client = await _context.Clients
-                .Include(c => c.RentedProperties)
+                .Include(c => c.ClientUnits)
                 .FirstOrDefaultAsync(c => c.Id == clientId);
 
             if (client == null)
                 throw new InvalidOperationException("Client not found.");
 
-            var property = await _context.Properties.FindAsync(propertyId);
-            if (property == null)
-                throw new InvalidOperationException("Property not found.");
+            var unit = await _context.Units.FindAsync(unitId);
+            if (unit == null)
+                throw new InvalidOperationException("Unit not found.");
 
-            var isAlreadyAdded = client.RentedProperties.Any(p => p.Id == propertyId);
+            var isAlreadyAdded = client.ClientUnits.Any(cu => cu.UnitId == unitId);
             if (isAlreadyAdded)
                 return;
 
-            client.RentedProperties.Add(property);
+            client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
             await _context.SaveChangesAsync();
         }
 
-        public async Task RemoveRentedPropertyAsync(int clientId, int propertyId)
+        public async Task RemoveRentedUnitAsync(int clientId, int unitId)
         {
             var client = await _context.Clients
-                .Include(c => c.RentedProperties)
+                .Include(c => c.ClientUnits)
+                .ThenInclude(cu => cu.Unit)
                 .FirstOrDefaultAsync(c => c.Id == clientId);
 
             if (client == null)
                 throw new InvalidOperationException("Client not found.");
 
-            var property = client.RentedProperties.FirstOrDefault(p => p.Id == propertyId);
-            if (property == null)
+            var unit = client.ClientUnits.FirstOrDefault(cu => cu.UnitId == unitId);
+            if (unit == null)
                 return;
 
-            client.RentedProperties.Remove(property);
+            client.ClientUnits.Remove(unit);
             await _context.SaveChangesAsync();
         }
 

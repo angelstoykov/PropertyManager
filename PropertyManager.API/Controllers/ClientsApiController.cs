@@ -58,24 +58,24 @@ namespace PropertyManager.API.Controllers
             return NoContent();
         }
 
-        [HttpGet("{id}/properties")]
-        public async Task<IActionResult> GetRentedProperties(int id)
+        [HttpGet("{id}/units")]
+        public async Task<IActionResult> GetRentedUnits(int id)
         {
-            var properties = await _clientsService.GetRentedPropertiesAsync(id);
+            var properties = await _clientsService.GetRentedUnitsAsync(id);
             return Ok(properties);
         }
 
-        [HttpPost("{id}/properties/{propertyId}")]
-        public async Task<IActionResult> AddRentedProperty(int id, int propertyId)
+        [HttpPost("{id}/units/{unitId}")]
+        public async Task<IActionResult> AddRentedUnit(int id, int unitId)
         {
-            await _clientsService.AddRentedPropertyAsync(id, propertyId);
+            await _clientsService.AddRentedUnitAsync(id, unitId);
             return NoContent();
         }
 
-        [HttpDelete("{id}/properties/{propertyId}")]
-        public async Task<IActionResult> RemoveRentedProperty(int id, int propertyId)
+        [HttpDelete("{id}/units/{unitId}")]
+        public async Task<IActionResult> RemoveRentedUnit(int id, int unitId)
         {
-            await _clientsService.RemoveRentedPropertyAsync(id, propertyId);
+            await _clientsService.RemoveRentedUnitAsync(id, unitId);
             return NoContent();
         }
     }

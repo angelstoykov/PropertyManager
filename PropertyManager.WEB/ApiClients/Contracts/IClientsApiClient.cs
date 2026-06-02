@@ -9,8 +9,8 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task CreateAsync(CreateClientDto dto);
         Task<HttpResponseMessage> UpdateAsync(EditClientDto dto);
         Task DeleteAsync(int id);
-        Task<IReadOnlyList<ClientRentedPropertyDto>> GetRentedPropertiesAsync(int clientId);
-        Task AddRentedPropertyAsync(int clientId, int propertyId);
-        Task RemoveRentedPropertyAsync(int clientId, int propertyId);
+        Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId);
+        Task AddRentedUnitAsync(int clientId, int unitId);
+        Task RemoveRentedUnitAsync(int clientId, int unitId);
     }
 }

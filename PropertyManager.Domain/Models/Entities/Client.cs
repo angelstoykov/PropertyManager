@@ -20,6 +20,6 @@ namespace PropertyManager.Domain.Models.Entities
         public string? VatNumber { get; set; }
         public string? LegalRepresentative { get; set; }
 
-        public ICollection<Property> RentedProperties { get; set; } = new List<Property>();
+        public ICollection<ClientUnit> ClientUnits { get; set; } = new List<ClientUnit>();
     }
 }

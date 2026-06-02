@@ -24,10 +24,6 @@ namespace PropertyManager.Data
                 entity.Property(e => e.Owner).IsRequired();
                 entity.Property(e => e.Type).IsRequired();
                 entity.Property(e => e.Status).IsRequired();
-
-                entity.HasMany(e => e.RentingClients)
-                    .WithMany(c => c.RentedProperties)
-                    .UsingEntity("ClientProperty");
             });
 
             // Unit entity configuration
@@ -39,6 +35,8 @@ namespace PropertyManager.Data
                     .WithMany(p => p.Units)
                     .HasForeignKey(u => u.PropertyId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(e => e.ClientUnits);
             });
 
             // Tenant
@@ -138,7 +136,25 @@ namespace PropertyManager.Data
                 entity.Property(c => c.LegalRepresentative).HasMaxLength(200);
 
                 entity.Property(c => c.ClientType).HasConversion<int>();
+
+                entity.HasMany(c => c.ClientUnits)
+                      .WithOne(cu => cu.Client)
+                      .HasForeignKey(cu => cu.ClientId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<ClientUnit>()
+                .HasKey(cu => new { cu.ClientId, cu.UnitId });
+
+            modelBuilder.Entity<ClientUnit>()
+                .HasOne(cu => cu.Client)
+                .WithMany(c => c.ClientUnits)
+                .HasForeignKey(cu => cu.ClientId);
+
+            modelBuilder.Entity<ClientUnit>()
+                .HasOne(cu => cu.Unit)
+                .WithMany(u => u.ClientUnits)
+                .HasForeignKey(cu => cu.UnitId);
 
             base.OnModelCreating(modelBuilder);
         }
