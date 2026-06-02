@@ -1,0 +1,18 @@
+@using PropertyManager.WEB.ViewModels.Clients
+@model ClientFormViewModel
+
+<h2>Create Client</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <partial name="_ClientFormFields" model="Model" />
+
+    <button type="submit" class="btn btn-primary mt-2">Create</button>
+    <a asp-action="Index" class="btn btn-secondary mt-2">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/clients/client-form.js"></script>
+}

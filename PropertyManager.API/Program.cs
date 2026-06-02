@@ -64,6 +64,7 @@ namespace PropertyManager.API
 
             builder.Services.AddScoped<IUnitsService, UnitsService>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
+            builder.Services.AddScoped<IClientsService, ClientsService>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             var app = builder.Build();

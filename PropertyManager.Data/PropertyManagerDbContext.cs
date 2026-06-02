@@ -121,6 +121,21 @@ namespace PropertyManager.Data
                 .Property(l => l.Status)
                 .HasConversion<int>();
 
+            modelBuilder.Entity<Client>(entity =>
+            {
+                entity.Property(c => c.Email).IsRequired().HasMaxLength(200);
+                entity.Property(c => c.Phone).IsRequired().HasMaxLength(50);
+                entity.Property(c => c.FirstName).HasMaxLength(100);
+                entity.Property(c => c.LastName).HasMaxLength(100);
+                entity.Property(c => c.PersonalId).HasMaxLength(20);
+                entity.Property(c => c.CompanyName).HasMaxLength(200);
+                entity.Property(c => c.CompanyNumber).HasMaxLength(50);
+                entity.Property(c => c.VatNumber).HasMaxLength(50);
+                entity.Property(c => c.LegalRepresentative).HasMaxLength(200);
+
+                entity.Property(c => c.ClientType).HasConversion<int>();
+            });
+
             base.OnModelCreating(modelBuilder);
         }
 
@@ -129,6 +144,7 @@ namespace PropertyManager.Data
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Lease> Leases => Set<Lease>();
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
+        public DbSet<Client> Clients => Set<Client>();
         //public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
         //public DbSet<Vendor> Vendors => Set<Vendor>();
     }

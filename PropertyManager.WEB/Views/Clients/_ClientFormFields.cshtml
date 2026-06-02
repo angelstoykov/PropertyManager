@@ -1,0 +1,58 @@
+@using PropertyManager.Domain.Models.Enums
+@model PropertyManager.WEB.ViewModels.Clients.ClientFormViewModel
+
+<div class="form-group mb-3">
+    <label asp-for="ClientType"></label>
+    <select asp-for="ClientType" class="form-control" id="clientType"
+            asp-items="Html.GetEnumSelectList<ClientType>()"></select>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Email"></label>
+    <input asp-for="Email" class="form-control" />
+    <span asp-validation-for="Email" class="text-danger"></span>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Phone"></label>
+    <input asp-for="Phone" class="form-control" />
+    <span asp-validation-for="Phone" class="text-danger"></span>
+</div>
+
+<div id="individualFields">
+    <div class="form-group mb-3">
+        <label asp-for="FirstName"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="LastName"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="PersonalId"></label>
+        <input asp-for="PersonalId" class="form-control" />
+    </div>
+</div>
+
+<div id="legalEntityFields" style="display: none;">
+    <div class="form-group mb-3">
+        <label asp-for="CompanyName"></label>
+        <input asp-for="CompanyName" class="form-control" />
+        <span asp-validation-for="CompanyName" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="CompanyNumber"></label>
+        <input asp-for="CompanyNumber" class="form-control" />
+        <span asp-validation-for="CompanyNumber" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="VatNumber"></label>
+        <input asp-for="VatNumber" class="form-control" />
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="LegalRepresentative"></label>
+        <input asp-for="LegalRepresentative" class="form-control" />
+    </div>
+</div>

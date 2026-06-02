@@ -1,0 +1,34 @@
+@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.Clients
+
+@model IEnumerable<ClientListItemViewModel>
+
+<h2>Clients</h2>
+<a asp-action="Create" class="btn btn-sm btn-warning mb-3">Create</a>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Model)
+        {
+            <tr>
+                <td>@client.DisplayName</td>
+                <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</td>
+                <td>@client.Email</td>
+                <td>@client.Phone</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
