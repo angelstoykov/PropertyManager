@@ -47,4 +47,10 @@ public class UnitsApiClient : IUnitsApiClient
         var response = await _httpClient.PutAsJsonAsync($"{api}/{model.Id}", model);
         return response.EnsureSuccessStatusCode();
     }
+
+    public async Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId)
+    {
+        return await _httpClient.GetFromJsonAsync<IEnumerable<UnitListItemDto>>(
+            $"{api}/by-property/{propertyId}");
+    }
 }

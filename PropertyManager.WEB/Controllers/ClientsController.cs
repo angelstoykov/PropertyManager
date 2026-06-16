@@ -10,11 +10,15 @@ namespace PropertyManager.WEB.Controllers
     {
         private readonly IClientsApiClient _clientsApiClient;
         private readonly IPropertyApiClient _propertyApiClient;
+        private readonly IUnitsApiClient _unitsApiClient;
 
-        public ClientsController(IClientsApiClient clientsApiClient, IPropertyApiClient propertyApiClient)
+        public ClientsController(IClientsApiClient clientsApiClient,
+            IPropertyApiClient propertyApiClient,
+            IUnitsApiClient unitsApiClient)
         {
             _clientsApiClient = clientsApiClient;
             _propertyApiClient = propertyApiClient;
+            _unitsApiClient = unitsApiClient;
         }
 
         public async Task<IActionResult> Index()
@@ -206,7 +210,12 @@ namespace PropertyManager.WEB.Controllers
             // TODO: refactor this to return only available units (which are not rented)
             var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(client.Id);
 
-            var availableProperties = (await _propertyApiClient.GetAllAsync()).ToList();    
+            var availableProperties = (await _propertyApiClient.GetAllAsync()).ToList();
+
+            foreach (var property in availableProperties)
+            {
+                property.Units = await _unitsApiClient.GetUnitsByPropertyIdAsync(property.Id);
+            }
 
             return new ClientRentedUnitsViewModel
             {

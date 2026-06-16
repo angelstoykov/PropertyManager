@@ -126,6 +126,7 @@ namespace PropertyManager.Application.Services
 
         public async Task AddRentedUnitAsync(int clientId, int unitId)
         {
+            // TODO: Debug here. Throws unit not here.
             var client = await _context.Clients
                 .Include(c => c.ClientUnits)
                 .FirstOrDefaultAsync(c => c.Id == clientId);

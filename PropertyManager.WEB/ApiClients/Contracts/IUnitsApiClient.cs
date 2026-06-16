@@ -16,5 +16,7 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task DeleteUnitById(int id);
 
         Task<HttpResponseMessage> UpdateUnitAsync(EditUnitDto model);
+
+        Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId);
     }
 }

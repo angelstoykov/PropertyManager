@@ -9,5 +9,6 @@ namespace PropertyManager.Application.DTOs.Properties
         public string Address { get; set; } = null!;
         public string Owner { get; set; } = null!;
         public PropertyType Type { get; set; }
+        public IEnumerable<UnitListItemDto> Units { get; set; } = new List<UnitListItemDto>();
     }
 }

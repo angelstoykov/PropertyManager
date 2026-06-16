@@ -18,9 +18,9 @@
             <option value="">-- Select property --</option>
             @foreach (var property in Model.AvailableProperties)
             {
-                @foreach (var unit in Model.AvailableProperties)
+                @foreach (var unit in property.Units)
                 {
-                    <option value="@unit.Id">@unit.Name - @property.Address</option>
+                    <option value="@unit.Id">@unit.UnitNumber - @property.Address - @unit.Id</option>
                 }
             }
         </select>

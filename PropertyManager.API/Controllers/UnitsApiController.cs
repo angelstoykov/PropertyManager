@@ -52,4 +52,11 @@ public class UnitsApiController : ControllerBase
         var result = await _unitService.GetUnitByIdAsync(id);
         return Ok(result);
     }
+
+    [HttpGet("by-property/{propertyId}")]
+    public async Task<IActionResult> GetUnitsByPropertyId(int propertyId)
+    {
+        var result = await _unitService.GetUnitsByPropertyIdAsync(propertyId);
+        return Ok(result);
+    }
 }

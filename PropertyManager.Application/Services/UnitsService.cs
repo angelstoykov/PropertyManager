@@ -139,5 +139,28 @@ namespace PropertyManager.Application.Services
                 Status = unit.Status
             };
         }
+
+        public async Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId)
+        {
+            var propertyExists = await _context.Properties
+                .AnyAsync(p => p.Id == propertyId);
+
+            if (!propertyExists)
+                throw new Exception("Property not found.");
+
+            return await _context.Units
+                .AsNoTracking()
+                .Where(u => u.PropertyId == propertyId)
+                .Select(u => new UnitListItemDto
+                {
+                    Id = u.Id,
+                    UnitNumber = u.UnitNumber,
+                    PropertyName = u.Property.Name,
+                    Floor = u.Floor,
+                    Area = u.Area,
+                    Status = u.Status
+                })
+                .ToListAsync();
+        }
     }
 }
