@@ -9,16 +9,10 @@ namespace PropertyManager.WEB.Controllers
     public class ClientsController : Controller
     {
         private readonly IClientsApiClient _clientsApiClient;
-        private readonly IPropertyApiClient _propertyApiClient;
-        private readonly IUnitsApiClient _unitsApiClient;
 
-        public ClientsController(IClientsApiClient clientsApiClient,
-            IPropertyApiClient propertyApiClient,
-            IUnitsApiClient unitsApiClient)
+        public ClientsController(IClientsApiClient clientsApiClient)
         {
             _clientsApiClient = clientsApiClient;
-            _propertyApiClient = propertyApiClient;
-            _unitsApiClient = unitsApiClient;
         }
 
         public async Task<IActionResult> Index()
@@ -149,6 +143,13 @@ namespace PropertyManager.WEB.Controllers
             return RedirectToAction(nameof(RentedUnits), new { id = clientId });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableUnits(int propertyId)
+        {
+            var units = await _clientsApiClient.GetAvailableUnitsByPropertyIdAsync(propertyId);
+            return Json(units);
+        }
+
         [HttpPost]
         public async Task<IActionResult> RemoveRentedUnit(int clientId, int unitId)
         {
@@ -207,15 +208,8 @@ namespace PropertyManager.WEB.Controllers
 
         private async Task<ClientRentedUnitsViewModel> BuildRentedUnitsViewModelAsync(ClientDto client)
         {
-            // TODO: refactor this to return only available units (which are not rented)
             var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(client.Id);
-
-            var availableProperties = (await _propertyApiClient.GetAllAsync()).ToList();
-
-            foreach (var property in availableProperties)
-            {
-                property.Units = await _unitsApiClient.GetUnitsByPropertyIdAsync(property.Id);
-            }
+            var availableProperties = await _clientsApiClient.GetAvailablePropertiesAsync();
 
             return new ClientRentedUnitsViewModel
             {

@@ -58,6 +58,20 @@ namespace PropertyManager.API.Controllers
             return NoContent();
         }
 
+        [HttpGet("available-properties")]
+        public async Task<IActionResult> GetAvailableProperties()
+        {
+            var properties = await _clientsService.GetAvailablePropertiesAsync();
+            return Ok(properties);
+        }
+
+        [HttpGet("available-units/{propertyId}")]
+        public async Task<IActionResult> GetAvailableUnits(int propertyId)
+        {
+            var units = await _clientsService.GetAvailableUnitsByPropertyIdAsync(propertyId);
+            return Ok(units);
+        }
+
         [HttpGet("{id}/units")]
         public async Task<IActionResult> GetRentedUnits(int id)
         {

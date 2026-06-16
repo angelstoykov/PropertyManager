@@ -1,4 +1,5 @@
 using PropertyManager.Application.DTOs.Clients;
+using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.WEB.ApiClients.Contracts;
 
 namespace PropertyManager.WEB.ApiClients
@@ -51,6 +52,18 @@ namespace PropertyManager.WEB.ApiClients
         {
             var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientRentedUnitDto>>($"{api}/{clientId}/units");
             return result ?? Array.Empty<ClientRentedUnitDto>();
+        }
+
+        public async Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync()
+        {
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<PropertyListItemDto>>($"{api}/available-properties");
+            return result ?? Array.Empty<PropertyListItemDto>();
+        }
+
+        public async Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId)
+        {
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<UnitListItemDto>>($"{api}/available-units/{propertyId}");
+            return result ?? Array.Empty<UnitListItemDto>();
         }
 
         public async Task AddRentedUnitAsync(int clientId, int unitId)

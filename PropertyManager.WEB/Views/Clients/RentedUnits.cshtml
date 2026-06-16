@@ -10,23 +10,26 @@
     <span class="ms-2 badge bg-secondary">@(Model.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</span>
 </div>
 
-<form asp-action="AddRentedUnit" method="post" class="row g-2 align-items-end mb-4">
+<form asp-action="AddRentedUnit" method="post" class="row g-2 align-items-end mb-4" id="addRentedUnitForm">
     <input type="hidden" name="clientId" value="@Model.ClientId" />
-    <div class="col-md-8">
-        <label class="form-label">Available units</label>
-        <select name="propertyId" class="form-select" required>
+    <div class="col-md-4">
+        <label class="form-label" for="propertySelect">Property</label>
+        <select id="propertySelect" class="form-select" required>
             <option value="">-- Select property --</option>
             @foreach (var property in Model.AvailableProperties)
             {
-                @foreach (var unit in property.Units)
-                {
-                    <option value="@unit.Id">@unit.UnitNumber - @property.Address - @unit.Id</option>
-                }
+                <option value="@property.Id">@property.Name - @property.Address</option>
             }
         </select>
     </div>
     <div class="col-md-4">
-        <button type="submit" class="btn btn-primary">Add Property</button>
+        <label class="form-label" for="unitSelect">Unit</label>
+        <select id="unitSelect" name="unitId" class="form-select" required disabled>
+            <option value="">-- Select unit --</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <button type="submit" class="btn btn-primary">Add Unit</button>
     </div>
 </form>
 
@@ -66,3 +69,7 @@
 </table>
 
 <a asp-action="Index" class="btn btn-secondary">Back</a>
+
+@section Scripts {
+    <script src="~/js/clients/rented-units.js" asp-append-version="true"></script>
+}

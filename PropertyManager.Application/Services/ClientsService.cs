@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PropertyManager.Application.DTOs.Clients;
+using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Entities;
@@ -124,9 +125,45 @@ namespace PropertyManager.Application.Services
                 .ToListAsync();
         }
 
+        public async Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync()
+        {
+            return await _context.Properties
+                .AsNoTracking()
+                .Where(p => p.Units.Any(u => !u.ClientUnits.Any()))
+                .OrderBy(p => p.Name)
+                .Select(p => new PropertyListItemDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Address = p.Address
+                })
+                .ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId)
+        {
+            var propertyExists = await _context.Properties.AnyAsync(p => p.Id == propertyId);
+            if (!propertyExists)
+                throw new InvalidOperationException("Property not found.");
+
+            return await _context.Units
+                .AsNoTracking()
+                .Where(u => u.PropertyId == propertyId && !u.ClientUnits.Any())
+                .OrderBy(u => u.UnitNumber)
+                .Select(u => new UnitListItemDto
+                {
+                    Id = u.Id,
+                    UnitNumber = u.UnitNumber,
+                    PropertyName = u.Property.Name,
+                    Floor = u.Floor,
+                    Area = u.Area,
+                    Status = u.Status
+                })
+                .ToListAsync();
+        }
+
         public async Task AddRentedUnitAsync(int clientId, int unitId)
         {
-            // TODO: Debug here. Throws unit not here.
             var client = await _context.Clients
                 .Include(c => c.ClientUnits)
                 .FirstOrDefaultAsync(c => c.Id == clientId);
@@ -143,6 +180,7 @@ namespace PropertyManager.Application.Services
                 return;
 
             client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
+            unit.Status = UnitStatus.Occupied;
             await _context.SaveChangesAsync();
         }
 
