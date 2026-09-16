@@ -156,6 +156,21 @@ namespace PropertyManager.Data
                 .WithMany(u => u.ClientUnits)
                 .HasForeignKey(cu => cu.UnitId);
 
+            modelBuilder.Entity<UnitFinancialRecord>(entity =>
+            {
+                entity.Property(r => r.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(r => r.Currency).IsRequired().HasMaxLength(3);
+                entity.Property(r => r.Comment).HasMaxLength(500);
+                entity.Property(r => r.Type).HasConversion<int>();
+
+                entity.HasOne(r => r.Unit)
+                    .WithMany(u => u.FinancialRecords)
+                    .HasForeignKey(r => r.UnitId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(r => new { r.UnitId, r.Date });
+            });
+
             base.OnModelCreating(modelBuilder);
         }
 
@@ -165,6 +180,7 @@ namespace PropertyManager.Data
         public DbSet<Lease> Leases => Set<Lease>();
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
+        public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
         //public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
         //public DbSet<Vendor> Vendors => Set<Vendor>();
     }

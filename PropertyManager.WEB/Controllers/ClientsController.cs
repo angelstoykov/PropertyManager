@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PropertyManager.Application.DTOs.Clients;
+using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Clients;
@@ -155,6 +156,157 @@ namespace PropertyManager.WEB.Controllers
         {
             await _clientsApiClient.RemoveRentedUnitAsync(clientId, unitId);
             return RedirectToAction(nameof(RentedUnits), new { id = clientId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId)
+        {
+            var client = await _clientsApiClient.GetByIdAsync(clientId);
+            if (client == null)
+                return NotFound();
+
+            var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(clientId);
+            var unit = rentedUnits.FirstOrDefault(u => u.UnitId == unitId);
+            if (unit == null)
+                return NotFound();
+
+            var records = await _clientsApiClient.GetFinancialRecordsAsync(clientId, unitId);
+
+            return View(new UnitFinancialRecordsViewModel
+            {
+                ClientId = clientId,
+                ClientDisplayName = GetDisplayName(client),
+                UnitId = unitId,
+                UnitName = unit.Name,
+                UnitAddress = unit.Address,
+                NewRecord = new UnitFinancialRecordFormViewModel
+                {
+                    ClientId = clientId,
+                    UnitId = unitId,
+                    Date = DateTime.Today
+                },
+                Records = records
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddFinancialRecord(
+            [Bind(Prefix = nameof(UnitFinancialRecordsViewModel.NewRecord))] UnitFinancialRecordFormViewModel record)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
+            }
+            var dto = new CreateUnitFinancialRecordDto
+            {
+                UnitId = record.UnitId,
+                Type = record.Type,
+                Date = record.Date,
+                Amount = record.Amount,
+                Currency = record.Currency,
+                Comment = record.Comment
+            };
+
+            try
+            {
+                await _clientsApiClient.CreateFinancialRecordAsync(record.ClientId, dto);
+            }
+            catch
+            {
+                ModelState.AddModelError("", "Error creating financial record.");
+                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
+            }
+
+            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId = record.ClientId, unitId = record.UnitId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditFinancialRecord(int clientId, int unitId, int id)
+        {
+            var record = await _clientsApiClient.GetFinancialRecordByIdAsync(clientId, unitId, id);
+            if (record == null)
+                return NotFound();
+
+            return View(new UnitFinancialRecordFormViewModel
+            {
+                Id = record.Id,
+                ClientId = clientId,
+                UnitId = unitId,
+                Type = record.Type,
+                Date = record.Date,
+                Amount = record.Amount,
+                Currency = record.Currency,
+                Comment = record.Comment
+            });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditFinancialRecord(UnitFinancialRecordFormViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var dto = new EditUnitFinancialRecordDto
+            {
+                Id = model.Id,
+                UnitId = model.UnitId,
+                Type = model.Type,
+                Date = model.Date,
+                Amount = model.Amount,
+                Currency = model.Currency,
+                Comment = model.Comment
+            };
+
+            try
+            {
+                var response = await _clientsApiClient.UpdateFinancialRecordAsync(model.ClientId, model.UnitId, dto);
+                if (!response.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError("", "Error updating financial record.");
+                    return View(model);
+                }
+            }
+            catch
+            {
+                ModelState.AddModelError("", "Error updating financial record.");
+                return View(model);
+            }
+
+            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId = model.ClientId, unitId = model.UnitId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteFinancialRecord(int clientId, int unitId, int id)
+        {
+            try
+            {
+                await _clientsApiClient.DeleteFinancialRecordAsync(clientId, unitId, id);
+            }
+            catch
+            {
+                return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId });
+            }
+
+            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId });
+        }
+
+        private async Task<UnitFinancialRecordsViewModel> RebuildFinancialRecordsViewModelAsync(UnitFinancialRecordFormViewModel model)
+        {
+            var client = await _clientsApiClient.GetByIdAsync(model.ClientId);
+            var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(model.ClientId);
+            var unit = rentedUnits.First(u => u.UnitId == model.UnitId);
+            var records = await _clientsApiClient.GetFinancialRecordsAsync(model.ClientId, model.UnitId);
+
+            return new UnitFinancialRecordsViewModel
+            {
+                ClientId = model.ClientId,
+                ClientDisplayName = client == null ? string.Empty : GetDisplayName(client),
+                UnitId = model.UnitId,
+                UnitName = unit.Name,
+                UnitAddress = unit.Address,
+                NewRecord = model,
+                Records = records
+            };
         }
 
         private static CreateClientDto MapToCreateDto(ClientFormViewModel model) => new()

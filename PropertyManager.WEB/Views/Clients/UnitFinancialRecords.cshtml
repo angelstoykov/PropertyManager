@@ -1,0 +1,114 @@
+@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.Clients
+
+@model UnitFinancialRecordsViewModel
+
+<h2>Financial Records</h2>
+
+<div class="mb-3">
+    <strong>Client:</strong> @Model.ClientDisplayName<br />
+    <strong>Unit:</strong> @Model.UnitName - @Model.UnitAddress
+</div>
+
+<h4 class="mt-4">Add Record</h4>
+<form asp-action="AddFinancialRecord" method="post" class="row g-2 align-items-end mb-4">
+    <input type="hidden" asp-for="NewRecord.ClientId" />
+    <input type="hidden" asp-for="NewRecord.UnitId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-2">
+        <label asp-for="NewRecord.Type" class="form-label"></label>
+        <select asp-for="NewRecord.Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()"></select>
+        <span asp-validation-for="NewRecord.Type" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="NewRecord.Date" class="form-label"></label>
+        <input asp-for="NewRecord.Date" class="form-control" type="date" />
+        <span asp-validation-for="NewRecord.Date" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="NewRecord.Amount" class="form-label"></label>
+        <input asp-for="NewRecord.Amount" class="form-control" type="number" step="0.01" min="0.01" />
+        <span asp-validation-for="NewRecord.Amount" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="NewRecord.Currency" class="form-label"></label>
+        <select asp-for="NewRecord.Currency" class="form-select">
+            <option value="BGN">BGN</option>
+            <option value="EUR">EUR</option>
+            <option value="USD">USD</option>
+        </select>
+        <span asp-validation-for="NewRecord.Currency" class="text-danger"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="NewRecord.Comment" class="form-label"></label>
+        <input asp-for="NewRecord.Comment" class="form-control" />
+        <span asp-validation-for="NewRecord.Comment" class="text-danger"></span>
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Currency</th>
+            <th>Comment</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Records.Any())
+        {
+            <tr>
+                <td colspan="6" class="text-muted">No financial records yet.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var record in Model.Records)
+            {
+                <tr>
+                    <td>
+                        @if (record.Type == FinancialRecordType.Income)
+                        {
+                            <span class="badge bg-success">Income</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Expense</span>
+                        }
+                    </td>
+                    <td>@record.Date.ToString("yyyy-MM-dd")</td>
+                    <td>@record.Amount.ToString("N2")</td>
+                    <td>@record.Currency</td>
+                    <td>@(string.IsNullOrWhiteSpace(record.Comment) ? "—" : record.Comment)</td>
+                    <td class="text-nowrap">
+                        <a asp-action="EditFinancialRecord"
+                           asp-route-clientId="@Model.ClientId"
+                           asp-route-unitId="@Model.UnitId"
+                           asp-route-id="@record.Id"
+                           class="btn btn-sm btn-warning">Edit</a>
+                        <form asp-action="DeleteFinancialRecord" method="post" class="d-inline">
+                            <input type="hidden" name="clientId" value="@Model.ClientId" />
+                            <input type="hidden" name="unitId" value="@Model.UnitId" />
+                            <input type="hidden" name="id" value="@record.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this record?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<a asp-action="RentedUnits" asp-route-id="@Model.ClientId" class="btn btn-secondary">Back to Rented Units</a>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,5 +1,6 @@
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Properties;
+using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.WEB.ApiClients.Contracts;
 
 namespace PropertyManager.WEB.ApiClients
@@ -75,6 +76,46 @@ namespace PropertyManager.WEB.ApiClients
         public async Task RemoveRentedUnitAsync(int clientId, int unitId)
         {
             var response = await _httpClient.DeleteAsync($"{api}/{clientId}/units/{unitId}");
+            response.EnsureSuccessStatusCode();
+        }
+
+        public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetFinancialRecordsAsync(int clientId, int unitId)
+        {
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<UnitFinancialRecordDto>>(
+                $"{api}/{clientId}/units/{unitId}/financial-records");
+            return result ?? Array.Empty<UnitFinancialRecordDto>();
+        }
+
+        public async Task<UnitFinancialRecordDto?> GetFinancialRecordByIdAsync(int clientId, int unitId, int id)
+        {
+            var response = await _httpClient.GetAsync($"{api}/{clientId}/units/{unitId}/financial-records/{id}");
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                return null;
+
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<UnitFinancialRecordDto>();
+        }
+
+        public async Task CreateFinancialRecordAsync(int clientId, CreateUnitFinancialRecordDto dto)
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                $"{api}/{clientId}/units/{dto.UnitId}/financial-records", dto);
+            response.EnsureSuccessStatusCode();
+        }
+
+        public async Task<HttpResponseMessage> UpdateFinancialRecordAsync(
+            int clientId,
+            int unitId,
+            EditUnitFinancialRecordDto dto)
+        {
+            var response = await _httpClient.PutAsJsonAsync(
+                $"{api}/{clientId}/units/{unitId}/financial-records/{dto.Id}", dto);
+            return response.EnsureSuccessStatusCode();
+        }
+
+        public async Task DeleteFinancialRecordAsync(int clientId, int unitId, int id)
+        {
+            var response = await _httpClient.DeleteAsync($"{api}/{clientId}/units/{unitId}/financial-records/{id}");
             response.EnsureSuccessStatusCode();
         }
     }

@@ -28,5 +28,6 @@ namespace PropertyManager.Domain.Models.Entities
 
         public ICollection<Lease> Leases { get; set; } = new List<Lease>();
         public IList<ClientUnit> ClientUnits { get; set; } = new List<ClientUnit>();
+        public ICollection<UnitFinancialRecord> FinancialRecords { get; set; } = new List<UnitFinancialRecord>();
     }
 }

@@ -56,7 +56,11 @@
                     <td>@property.Name</td>
                     <td>@property.Address</td>
                     <td>
-                        <form asp-action="RemoveRentedUnit" method="post">
+                        <a asp-action="UnitFinancialRecords"
+                           asp-route-clientId="@Model.ClientId"
+                           asp-route-unitId="@property.UnitId"
+                           class="btn btn-sm btn-info me-1">Financial Records</a>
+                        <form asp-action="RemoveRentedUnit" method="post" class="d-inline">
                             <input type="hidden" name="clientId" value="@Model.ClientId" />
                             <input type="hidden" name="unitId" value="@property.UnitId" />
                             <button type="submit" class="btn btn-sm btn-danger">Remove</button>
