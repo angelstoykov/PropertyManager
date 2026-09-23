@@ -171,6 +171,18 @@ namespace PropertyManager.Data
                 entity.HasIndex(r => new { r.UnitId, r.Date });
             });
 
+            // ----------------------------
+            // CURRENCY
+            // ----------------------------
+            modelBuilder.Entity<Currency>(entity =>
+            {
+                entity.HasKey(r => r.Id);
+                entity.Property(r => r.Code).IsRequired().HasMaxLength(3);
+                entity.Property(r => r.Name).IsRequired().HasMaxLength(20);
+                entity.Property(r => r.IsActive).IsRequired();
+                entity.Property(r => r.DecimalPlaces).IsRequired();
+            });
+
             base.OnModelCreating(modelBuilder);
         }
 
@@ -181,6 +193,8 @@ namespace PropertyManager.Data
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
+        public DbSet<Currency> Currencies => Set<Currency>();
+
         //public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
         //public DbSet<Vendor> Vendors => Set<Vendor>();
     }
