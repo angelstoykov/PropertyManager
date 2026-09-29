@@ -24,5 +24,12 @@ namespace PropertyManager.API.Controllers
             var currencies = await _currencyService.GetAllAsync();
             return Ok(currencies);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllActiveAsync()
+        {
+            var activeCurrencies = await _currencyService.GetAllActiveAsync();
+            return Ok(activeCurrencies);
+        }
     }
 }

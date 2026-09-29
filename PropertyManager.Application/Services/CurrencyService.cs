@@ -29,5 +29,23 @@ namespace PropertyManager.Application.Services.Contracts
                 })
                 .ToListAsync();
         }
+
+        public async Task<IReadOnlyList<CurrencyDto>> GetAllActiveAsync()
+        {
+            return await _context.Currencies
+                .AsNoTracking()
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Name)
+                .Select(c => new CurrencyDto
+                {
+                    Id = c.Id,
+                    Code = c.Code,
+                    Name = c.Name,
+                    Symbol = c.Symbol,
+                    DecimalPlaces = c.DecimalPlaces,
+                    IsActive = c.IsActive
+                })
+                .ToListAsync();
+        }
     }
 }
