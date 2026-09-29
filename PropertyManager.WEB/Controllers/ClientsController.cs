@@ -10,10 +10,13 @@ namespace PropertyManager.WEB.Controllers
     public class ClientsController : Controller
     {
         private readonly IClientsApiClient _clientsApiClient;
+        private readonly ICurrencyApiClient _currencyApiClient;
 
-        public ClientsController(IClientsApiClient clientsApiClient)
+        public ClientsController(IClientsApiClient clientsApiClient,
+                                 ICurrencyApiClient currencyApiClient)
         {
             _clientsApiClient = clientsApiClient;
+            _currencyApiClient = currencyApiClient;
         }
 
         public async Task<IActionResult> Index()
@@ -161,6 +164,8 @@ namespace PropertyManager.WEB.Controllers
         [HttpGet]
         public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId)
         {
+            var currencies = await _currencyApiClient.GetAllAsync();
+
             var client = await _clientsApiClient.GetByIdAsync(clientId);
             if (client == null)
                 return NotFound();

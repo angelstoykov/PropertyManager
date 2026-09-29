@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="NewFolder\**" />
-    <EmbeddedResource Remove="NewFolder\**" />
-    <None Remove="NewFolder\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\PropertyManager.Data\PropertyManager.Data.csproj" />
     <ProjectReference Include="..\PropertyManager.Domain\PropertyManager.Domain.csproj" />
   </ItemGroup>

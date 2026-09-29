@@ -19,7 +19,7 @@ namespace PropertyManager.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddDbContext<PropertyManagerDbContext>(options =>
+            builder.Services.AddDbContext<IPropertyManagerDbContext, PropertyManagerDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services
@@ -62,6 +62,7 @@ namespace PropertyManager.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddScoped<ICurrencyService, CurrencyService>();
             builder.Services.AddScoped<IUnitsService, UnitsService>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
             builder.Services.AddScoped<IClientsService, ClientsService>();

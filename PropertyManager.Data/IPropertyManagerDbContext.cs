@@ -8,5 +8,7 @@ namespace PropertyManager.Data
         public DbSet<Property> Properties { get; }
 
         public DbSet<Unit> Units { get; }
+
+        public DbSet<Currency> Currencies { get; }
     }
 }
