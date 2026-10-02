@@ -30,13 +30,9 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="Currency" class="form-label"></label>
-        <select asp-for="Currency" class="form-select">
-            <option value="BGN">BGN</option>
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-        </select>
-        <span asp-validation-for="Currency" class="text-danger"></span>
+        <label asp-for="CurrencyId" class="form-label"></label>
+        <select asp-for="CurrencyId" class="form-select" asp-items="Model.Currencies"></select>
+        <span asp-validation-for="CurrencyId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">

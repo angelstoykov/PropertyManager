@@ -9,7 +9,9 @@ namespace PropertyManager.Application.DTOs.UnitFinancialRecords
         public FinancialRecordType Type { get; set; }
         public DateTime Date { get; set; }
         public decimal Amount { get; set; }
-        public string Currency { get; set; } = null!;
+        public int CurrencyId { get; set; }
+        public string? CurrencyCode { get; set; }
+        public string? CurrencySymbol { get; set; }
         public string? Comment { get; set; }
     }
 }

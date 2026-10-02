@@ -5,5 +5,6 @@ namespace PropertyManager.Application.DTOs.Clients
         public int UnitId { get; set; }
         public string Name { get; set; } = null!;
         public string Address { get; set; } = null!;
+        public string UnitNumber { get; set; } = null!;
     }
 }

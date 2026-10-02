@@ -164,8 +164,6 @@ namespace PropertyManager.WEB.Controllers
         [HttpGet]
         public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId)
         {
-            var currencies = await _currencyApiClient.GetAllAsync();
-
             var client = await _clientsApiClient.GetByIdAsync(clientId);
             if (client == null)
                 return NotFound();
@@ -177,26 +175,29 @@ namespace PropertyManager.WEB.Controllers
 
             var records = await _clientsApiClient.GetFinancialRecordsAsync(clientId, unitId);
 
-            return View(new UnitFinancialRecordsViewModel
+            var model = new UnitFinancialRecordsViewModel
             {
                 ClientId = clientId,
                 ClientDisplayName = GetDisplayName(client),
                 UnitId = unitId,
                 UnitName = unit.Name,
                 UnitAddress = unit.Address,
-                NewRecord = new UnitFinancialRecordFormViewModel
+                UnitNumber = unit.UnitNumber,
+                FinancialRecord = new UnitFinancialRecordFormViewModel
                 {
                     ClientId = clientId,
                     UnitId = unitId,
                     Date = DateTime.Today
                 },
                 Records = records
-            });
+            };
+            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddFinancialRecord(
-            [Bind(Prefix = nameof(UnitFinancialRecordsViewModel.NewRecord))] UnitFinancialRecordFormViewModel record)
+            [Bind(Prefix = nameof(UnitFinancialRecordsViewModel.FinancialRecord))] UnitFinancialRecordFormViewModel record)
         {
             if (!ModelState.IsValid)
             {
@@ -208,7 +209,7 @@ namespace PropertyManager.WEB.Controllers
                 Type = record.Type,
                 Date = record.Date,
                 Amount = record.Amount,
-                Currency = record.Currency,
+                CurrencyId = record.CurrencyId,
                 Comment = record.Comment
             };
 
@@ -232,7 +233,7 @@ namespace PropertyManager.WEB.Controllers
             if (record == null)
                 return NotFound();
 
-            return View(new UnitFinancialRecordFormViewModel
+            var model = new UnitFinancialRecordFormViewModel
             {
                 Id = record.Id,
                 ClientId = clientId,
@@ -240,16 +241,23 @@ namespace PropertyManager.WEB.Controllers
                 Type = record.Type,
                 Date = record.Date,
                 Amount = record.Amount,
-                Currency = record.Currency,
+                CurrencyId = record.CurrencyId,
                 Comment = record.Comment
-            });
+            };
+
+            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> EditFinancialRecord(UnitFinancialRecordFormViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                await model.LoadActiveCurrenciesAsync(_currencyApiClient);
                 return View(model);
+            }
 
             var dto = new EditUnitFinancialRecordDto
             {
@@ -258,7 +266,7 @@ namespace PropertyManager.WEB.Controllers
                 Type = model.Type,
                 Date = model.Date,
                 Amount = model.Amount,
-                Currency = model.Currency,
+                CurrencyId = model.CurrencyId,
                 Comment = model.Comment
             };
 
@@ -268,12 +276,14 @@ namespace PropertyManager.WEB.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     ModelState.AddModelError("", "Error updating financial record.");
+                    await model.LoadActiveCurrenciesAsync(_currencyApiClient);
                     return View(model);
                 }
             }
             catch
             {
                 ModelState.AddModelError("", "Error updating financial record.");
+                await model.LoadActiveCurrenciesAsync(_currencyApiClient);
                 return View(model);
             }
 
@@ -302,16 +312,18 @@ namespace PropertyManager.WEB.Controllers
             var unit = rentedUnits.First(u => u.UnitId == model.UnitId);
             var records = await _clientsApiClient.GetFinancialRecordsAsync(model.ClientId, model.UnitId);
 
-            return new UnitFinancialRecordsViewModel
+            var vm = new UnitFinancialRecordsViewModel
             {
                 ClientId = model.ClientId,
                 ClientDisplayName = client == null ? string.Empty : GetDisplayName(client),
                 UnitId = model.UnitId,
                 UnitName = unit.Name,
                 UnitAddress = unit.Address,
-                NewRecord = model,
+                FinancialRecord = model,
                 Records = records
             };
+            await vm.LoadActiveCurrenciesAsync(_currencyApiClient);
+            return vm;
         }
 
         private static CreateClientDto MapToCreateDto(ClientFormViewModel model) => new()

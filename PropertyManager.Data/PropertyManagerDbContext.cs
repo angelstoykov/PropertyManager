@@ -159,7 +159,6 @@ namespace PropertyManager.Data
             modelBuilder.Entity<UnitFinancialRecord>(entity =>
             {
                 entity.Property(r => r.Amount).HasColumnType("decimal(18,2)");
-                entity.Property(r => r.Currency).IsRequired().HasMaxLength(3);
                 entity.Property(r => r.Comment).HasMaxLength(500);
                 entity.Property(r => r.Type).HasConversion<int>();
 
@@ -168,7 +167,13 @@ namespace PropertyManager.Data
                     .HasForeignKey(r => r.UnitId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                entity.HasOne(r => r.Currency)
+                    .WithMany()
+                    .HasForeignKey(r => r.CurrencyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(r => new { r.UnitId, r.Date });
+                entity.HasIndex(r => r.CurrencyId);
             });
 
             // ----------------------------
@@ -178,6 +183,7 @@ namespace PropertyManager.Data
             {
                 entity.HasKey(r => r.Id);
                 entity.Property(r => r.Code).IsRequired().HasMaxLength(3);
+                entity.HasIndex(r => r.Code).IsUnique();
                 entity.Property(r => r.Name).IsRequired().HasMaxLength(20);
                 entity.Property(r => r.IsActive).IsRequired();
                 entity.Property(r => r.DecimalPlaces).IsRequired();

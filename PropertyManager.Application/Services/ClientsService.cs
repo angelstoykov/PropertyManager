@@ -120,7 +120,8 @@ namespace PropertyManager.Application.Services
                 {
                     UnitId = p.Id,
                     Name = p.Property.Name,
-                    Address = p.Property.Address
+                    Address = p.Property.Address,
+                    UnitNumber = p.UnitNumber
                 })
                 .ToListAsync();
         }

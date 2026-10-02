@@ -26,5 +26,20 @@ namespace PropertyManager.WEB.ApiClients
 
             return result;
         }
+
+        public async Task<IEnumerable<CurrencyDto>> GetAllActiveAsync()
+        {
+            var result = await _httpClient
+                .GetFromJsonAsync<IEnumerable<CurrencyDto>>("api/currencies/active")
+                ?? Enumerable.Empty<CurrencyDto>();
+
+            if (!result.Any())
+            {
+                // log response.StatusCode and content
+                return Enumerable.Empty<CurrencyDto>();
+            }
+
+            return result;
+        }
     }
 }

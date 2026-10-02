@@ -23,7 +23,7 @@ namespace PropertyManager.Application.Services.Contracts
                     Id = c.Id,
                     Code = c.Code,
                     Name = c.Name,
-                    Symbol = c.Symbol,
+                    Symbol = c.Symbol ?? c.Code,
                     DecimalPlaces = c.DecimalPlaces,
                     IsActive = c.IsActive
                 })
@@ -41,7 +41,7 @@ namespace PropertyManager.Application.Services.Contracts
                     Id = c.Id,
                     Code = c.Code,
                     Name = c.Name,
-                    Symbol = c.Symbol,
+                    Symbol = c.Symbol ?? c.Code,
                     DecimalPlaces = c.DecimalPlaces,
                     IsActive = c.IsActive
                 })

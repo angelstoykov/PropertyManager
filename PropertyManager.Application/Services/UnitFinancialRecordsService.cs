@@ -31,7 +31,9 @@ namespace PropertyManager.Application.Services
                     Type = r.Type,
                     Date = r.Date,
                     Amount = r.Amount,
-                    Currency = r.Currency,
+                    CurrencyId = r.CurrencyId,
+                    CurrencyCode = r.Currency.Code,
+                    CurrencySymbol = r.Currency.Symbol ?? r.Currency.Code,
                     Comment = r.Comment
                 })
                 .ToListAsync();
@@ -43,6 +45,7 @@ namespace PropertyManager.Application.Services
 
             var record = await _context.UnitFinancialRecords
                 .AsNoTracking()
+                .Include(r => r.Currency)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UnitId == unitId);
 
             return record == null ? null : MapToDto(record);
@@ -51,7 +54,7 @@ namespace PropertyManager.Application.Services
         public async Task<int> CreateAsync(int clientId, CreateUnitFinancialRecordDto dto)
         {
             await EnsureClientHasUnitAsync(clientId, dto.UnitId);
-            ValidateRecordFields(dto.Amount, dto.Currency);
+            await ValidateRecordFieldsAsync(dto.Amount, dto.CurrencyId, requireActive: true);
 
             var record = new UnitFinancialRecord
             {
@@ -59,7 +62,7 @@ namespace PropertyManager.Application.Services
                 Type = dto.Type,
                 Date = dto.Date.Date,
                 Amount = dto.Amount,
-                Currency = dto.Currency.Trim().ToUpperInvariant(),
+                CurrencyId = dto.CurrencyId,
                 Comment = string.IsNullOrWhiteSpace(dto.Comment) ? null : dto.Comment.Trim()
             };
 
@@ -72,7 +75,6 @@ namespace PropertyManager.Application.Services
         public async Task EditAsync(int clientId, EditUnitFinancialRecordDto dto)
         {
             await EnsureClientHasUnitAsync(clientId, dto.UnitId);
-            ValidateRecordFields(dto.Amount, dto.Currency);
 
             var record = await _context.UnitFinancialRecords
                 .FirstOrDefaultAsync(r => r.Id == dto.Id && r.UnitId == dto.UnitId);
@@ -80,10 +82,13 @@ namespace PropertyManager.Application.Services
             if (record == null)
                 throw new InvalidOperationException("Financial record not found.");
 
+            var requireActive = record.CurrencyId != dto.CurrencyId;
+            await ValidateRecordFieldsAsync(dto.Amount, dto.CurrencyId, requireActive);
+
             record.Type = dto.Type;
             record.Date = dto.Date.Date;
             record.Amount = dto.Amount;
-            record.Currency = dto.Currency.Trim().ToUpperInvariant();
+            record.CurrencyId = dto.CurrencyId;
             record.Comment = string.IsNullOrWhiteSpace(dto.Comment) ? null : dto.Comment.Trim();
 
             await _context.SaveChangesAsync();
@@ -115,13 +120,18 @@ namespace PropertyManager.Application.Services
                 throw new InvalidOperationException("Unit is not rented by this client.");
         }
 
-        private static void ValidateRecordFields(decimal amount, string currency)
+        private async Task ValidateRecordFieldsAsync(decimal amount, int currencyId, bool requireActive)
         {
             if (amount <= 0)
                 throw new InvalidOperationException("Amount must be greater than zero.");
 
-            if (string.IsNullOrWhiteSpace(currency) || currency.Trim().Length != 3)
-                throw new InvalidOperationException("Currency must be a 3-letter ISO code.");
+            var currencyQuery = _context.Currencies.AsNoTracking().Where(c => c.Id == currencyId);
+            if (requireActive)
+                currencyQuery = currencyQuery.Where(c => c.IsActive);
+
+            var exists = await currencyQuery.AnyAsync();
+            if (!exists)
+                throw new InvalidOperationException("Currency is not valid.");
         }
 
         private static UnitFinancialRecordDto MapToDto(UnitFinancialRecord record) => new()
@@ -131,7 +141,9 @@ namespace PropertyManager.Application.Services
             Type = record.Type,
             Date = record.Date,
             Amount = record.Amount,
-            Currency = record.Currency,
+            CurrencyId = record.CurrencyId,
+            CurrencyCode = record.Currency.Code,
+            CurrencySymbol = record.Currency.Symbol ?? record.Currency.Code,
             Comment = record.Comment
         };
     }

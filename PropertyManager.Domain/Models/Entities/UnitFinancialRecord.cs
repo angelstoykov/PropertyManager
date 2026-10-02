@@ -19,9 +19,8 @@ namespace PropertyManager.Domain.Models.Entities
         [Precision(18, 2)]
         public decimal Amount { get; set; }
 
-        [Required]
-        [MaxLength(3)]
-        public string Currency { get; set; } = "BGN";
+        public int CurrencyId { get; set; }
+        public Currency Currency { get; set; } = null!;
 
         [MaxLength(500)]
         public string? Comment { get; set; }
