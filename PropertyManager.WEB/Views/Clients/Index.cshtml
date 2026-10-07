@@ -1,10 +1,24 @@
 @using PropertyManager.Domain.Models.Enums
 @using PropertyManager.WEB.ViewModels.Clients
 
-@model IEnumerable<ClientListItemViewModel>
+@model ClientsIndexViewModel
 
 <h2>Clients</h2>
 <a asp-action="Create" class="btn btn-sm btn-warning mb-3">Create</a>
+
+<form method="get" asp-action="Index" class="d-flex gap-2 mb-3" style="max-width: 36rem;">
+    <input type="search"
+           name="search"
+           value="@Model.Search"
+           class="form-control"
+           placeholder="Search by name, email, or phone"
+           aria-label="Search clients" />
+    <button type="submit" class="btn btn-primary">Search</button>
+    @if (!string.IsNullOrWhiteSpace(Model.Search))
+    {
+        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+    }
+</form>
 
 <table class="table table-bordered table-hover">
     <thead>
@@ -17,19 +31,32 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var client in Model)
+        @if (Model.Clients.Count == 0)
         {
             <tr>
-                <td>@client.DisplayName</td>
-                <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</td>
-                <td>@client.Email</td>
-                <td>@client.Phone</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
-                    <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
-                    <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                <td colspan="5" class="text-muted">
+                    @(string.IsNullOrWhiteSpace(Model.Search)
+                        ? "No clients."
+                        : "No clients match your search.")
                 </td>
             </tr>
+        }
+        else
+        {
+            @foreach (var client in Model.Clients)
+            {
+                <tr>
+                    <td>@client.DisplayName</td>
+                    <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</td>
+                    <td>@client.Email</td>
+                    <td>@client.Phone</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
+                        <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            }
         }
     </tbody>
 </table>

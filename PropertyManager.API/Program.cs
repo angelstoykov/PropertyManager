@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PropertyManager.API.Services;
+using PropertyManager.Application.Configuration;
 using PropertyManager.Application.Services;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
@@ -61,6 +62,9 @@ namespace PropertyManager.API
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.Configure<ClientSearchOptions>(
+                builder.Configuration.GetSection(ClientSearchOptions.SectionName));
 
             builder.Services.AddScoped<ICurrencyService, CurrencyService>();
             builder.Services.AddScoped<IUnitsService, UnitsService>();

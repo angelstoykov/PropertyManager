@@ -19,9 +19,9 @@ namespace PropertyManager.WEB.Controllers
             _currencyApiClient = currencyApiClient;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
-            var clients = (await _clientsApiClient.GetAllAsync())
+            var clients = (await _clientsApiClient.GetAllAsync(search))
                 .Select(c => new ClientListItemViewModel
                 {
                     Id = c.Id,
@@ -32,7 +32,11 @@ namespace PropertyManager.WEB.Controllers
                 })
                 .ToList();
 
-            return View(clients);
+            return View(new ClientsIndexViewModel
+            {
+                Search = search,
+                Clients = clients
+            });
         }
 
         [HttpGet]

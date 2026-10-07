@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using PropertyManager.Application.Configuration;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Application.Services.Contracts;
@@ -11,15 +13,17 @@ namespace PropertyManager.Application.Services
     public class ClientsService : IClientsService
     {
         private readonly PropertyManagerDbContext _context;
+        private readonly HashSet<ClientSearchField> _searchFields;
 
-        public ClientsService(PropertyManagerDbContext context)
+        public ClientsService(PropertyManagerDbContext context, IOptions<ClientSearchOptions> searchOptions)
         {
             _context = context;
+            _searchFields = ParseSearchFields(searchOptions.Value.Fields);
         }
 
-        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync()
+        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync(string? search = null)
         {
-            return await _context.Clients
+            var clients = await _context.Clients
                 .AsNoTracking()
                 .OrderBy(c => c.ClientType)
                 .ThenBy(c => c.CompanyName)
@@ -36,6 +40,12 @@ namespace PropertyManager.Application.Services
                     Phone = c.Phone
                 })
                 .ToListAsync();
+
+            if (string.IsNullOrWhiteSpace(search) || _searchFields.Count == 0)
+                return clients;
+
+            var term = search.Trim();
+            return clients.Where(c => MatchesSearch(c, term)).ToList();
         }
 
         public async Task<ClientDto?> GetByIdAsync(int id)
@@ -201,6 +211,41 @@ namespace PropertyManager.Application.Services
 
             client.ClientUnits.Remove(unit);
             await _context.SaveChangesAsync();
+        }
+
+        private static HashSet<ClientSearchField> ParseSearchFields(IEnumerable<string>? fields)
+        {
+            var result = new HashSet<ClientSearchField>();
+            if (fields == null)
+                return result;
+
+            foreach (var field in fields)
+            {
+                if (Enum.TryParse<ClientSearchField>(field, ignoreCase: true, out var parsed))
+                    result.Add(parsed);
+            }
+
+            return result;
+        }
+
+        private bool MatchesSearch(ClientListItemDto client, string term)
+        {
+            foreach (var field in _searchFields)
+            {
+                var value = field switch
+                {
+                    ClientSearchField.Name => client.DisplayName,
+                    ClientSearchField.Email => client.Email,
+                    ClientSearchField.Phone => client.Phone,
+                    _ => null
+                };
+
+                if (!string.IsNullOrEmpty(value) &&
+                    value.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
         }
 
         private static void ValidateClientFields(

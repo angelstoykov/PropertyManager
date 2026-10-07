@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.WebUtilities;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Application.DTOs.UnitFinancialRecords;
@@ -15,9 +16,13 @@ namespace PropertyManager.WEB.ApiClients
             _httpClient = httpClient;
         }
 
-        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync()
+        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync(string? search = null)
         {
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientListItemDto>>(api);
+            var url = string.IsNullOrWhiteSpace(search)
+                ? api
+                : QueryHelpers.AddQueryString(api, "search", search.Trim());
+
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientListItemDto>>(url);
             return result ?? Array.Empty<ClientListItemDto>();
         }
 

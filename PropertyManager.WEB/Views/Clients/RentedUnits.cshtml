@@ -36,8 +36,8 @@
 <table class="table table-bordered table-hover">
     <thead>
         <tr>
-            <th>Name</th>
             <th>Address</th>
+            <th>Unit</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -53,8 +53,8 @@
             @foreach (var property in Model.RentedUnits)
             {
                 <tr>
-                    <td>@property.Name</td>
                     <td>@property.Address</td>
+                    <td>@property.UnitNumber</td>
                     <td>
                         <a asp-action="UnitFinancialRecords"
                            asp-route-clientId="@Model.ClientId"

@@ -6,7 +6,7 @@ namespace PropertyManager.WEB.ApiClients.Contracts
 {
     public interface IClientsApiClient
     {
-        Task<IReadOnlyList<ClientListItemDto>> GetAllAsync();
+        Task<IReadOnlyList<ClientListItemDto>> GetAllAsync(string? search = null);
         Task<ClientDto?> GetByIdAsync(int id);
         Task CreateAsync(CreateClientDto dto);
         Task<HttpResponseMessage> UpdateAsync(EditClientDto dto);

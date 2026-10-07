@@ -23,9 +23,9 @@ namespace PropertyManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] string? search)
         {
-            var result = await _clientsService.GetAllAsync();
+            var result = await _clientsService.GetAllAsync(search);
             return Ok(result);
         }
 
