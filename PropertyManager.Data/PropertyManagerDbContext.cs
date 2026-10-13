@@ -176,6 +176,37 @@ namespace PropertyManager.Data
                 entity.HasIndex(r => r.CurrencyId);
             });
 
+            modelBuilder.Entity<PriceComponent>(entity =>
+            {
+                entity.Property(c => c.Name).IsRequired().HasMaxLength(100);
+                entity.HasIndex(c => c.Name).IsUnique();
+                entity.Property(c => c.IncludeInCommission).IsRequired();
+                entity.Property(c => c.IsActive).IsRequired();
+            });
+
+            modelBuilder.Entity<UnitPriceComponent>(entity =>
+            {
+                entity.Property(c => c.Amount).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(c => c.Unit)
+                    .WithMany(u => u.PriceComponents)
+                    .HasForeignKey(c => c.UnitId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(c => c.PriceComponent)
+                    .WithMany(p => p.UnitPrices)
+                    .HasForeignKey(c => c.PriceComponentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(c => c.Currency)
+                    .WithMany()
+                    .HasForeignKey(c => c.CurrencyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(c => new { c.UnitId, c.PriceComponentId }).IsUnique();
+                entity.HasIndex(c => c.CurrencyId);
+            });
+
             // ----------------------------
             // CURRENCY
             // ----------------------------
@@ -200,6 +231,8 @@ namespace PropertyManager.Data
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
         public DbSet<Currency> Currencies => Set<Currency>();
+        public DbSet<PriceComponent> PriceComponents => Set<PriceComponent>();
+        public DbSet<UnitPriceComponent> UnitPriceComponents => Set<UnitPriceComponent>();
 
         //public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
         //public DbSet<Vendor> Vendors => Set<Vendor>();

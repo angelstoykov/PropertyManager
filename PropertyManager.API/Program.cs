@@ -71,6 +71,8 @@ namespace PropertyManager.API
             builder.Services.AddScoped<IPropertyService, PropertyService>();
             builder.Services.AddScoped<IClientsService, ClientsService>();
             builder.Services.AddScoped<IUnitFinancialRecordsService, UnitFinancialRecordsService>();
+            builder.Services.AddScoped<IPriceComponentsService, PriceComponentsService>();
+            builder.Services.AddScoped<IUnitPriceComponentsService, UnitPriceComponentsService>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             var app = builder.Build();

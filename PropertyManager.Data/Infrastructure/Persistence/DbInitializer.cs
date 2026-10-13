@@ -29,6 +29,23 @@ namespace PropertyManager.Data.Infrastructure.Persistence
                 context.Currencies.Add(currency);
             }
 
+            if (!context.PriceComponents.Any())
+            {
+                context.PriceComponents.AddRange(
+                    new PriceComponent
+                    {
+                        Name = "Rental price",
+                        IncludeInCommission = true,
+                        IsActive = true
+                    },
+                    new PriceComponent
+                    {
+                        Name = "Maintenance fee",
+                        IncludeInCommission = false,
+                        IsActive = true
+                    });
+            }
+
             context.SaveChanges();
         }
     }

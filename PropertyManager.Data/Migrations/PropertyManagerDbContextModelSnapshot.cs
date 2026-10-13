@@ -365,6 +365,33 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("Leases");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.PriceComponent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IncludeInCommission")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("PriceComponents");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Property", b =>
                 {
                     b.Property<int>("Id")
@@ -545,6 +572,39 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("UnitFinancialRecords");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.UnitPriceComponent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CurrencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PriceComponentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("PriceComponentId");
+
+                    b.HasIndex("UnitId", "PriceComponentId")
+                        .IsUnique();
+
+                    b.ToTable("UnitPriceComponents");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -675,6 +735,33 @@ namespace PropertyManager.Data.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.UnitPriceComponent", b =>
+                {
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Currency", "Currency")
+                        .WithMany()
+                        .HasForeignKey("CurrencyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PropertyManager.Domain.Models.Entities.PriceComponent", "PriceComponent")
+                        .WithMany("UnitPrices")
+                        .HasForeignKey("PriceComponentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
+                        .WithMany("PriceComponents")
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("PriceComponent");
+
+                    b.Navigation("Unit");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Client", b =>
                 {
                     b.Navigation("ClientUnits");
@@ -683,6 +770,11 @@ namespace PropertyManager.Data.Migrations
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>
                 {
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.PriceComponent", b =>
+                {
+                    b.Navigation("UnitPrices");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Property", b =>
@@ -702,6 +794,8 @@ namespace PropertyManager.Data.Migrations
                     b.Navigation("FinancialRecords");
 
                     b.Navigation("Leases");
+
+                    b.Navigation("PriceComponents");
                 });
 #pragma warning restore 612, 618
         }

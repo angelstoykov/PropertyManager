@@ -1,4 +1,5 @@
 ﻿using PropertyManager.Application.DTOs.Unit;
+using PropertyManager.Application.DTOs.UnitPriceComponents;
 using PropertyManager.WEB.ViewModels.Units;
 
 namespace PropertyManager.WEB.ApiClients.Contracts
@@ -18,5 +19,15 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task<HttpResponseMessage> UpdateUnitAsync(EditUnitDto model);
 
         Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId);
+
+        Task<IReadOnlyList<UnitPriceComponentDto>> GetPriceComponentsAsync(int unitId);
+
+        Task<UnitPriceComponentDto?> GetPriceComponentByIdAsync(int unitId, int id);
+
+        Task CreatePriceComponentAsync(CreateUnitPriceComponentDto dto);
+
+        Task<HttpResponseMessage> UpdatePriceComponentAsync(int unitId, EditUnitPriceComponentDto dto);
+
+        Task DeletePriceComponentAsync(int unitId, int id);
     }
 }

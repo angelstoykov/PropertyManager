@@ -75,6 +75,10 @@ namespace PropertyManager.WEB
                     client.BaseAddress = new Uri(apiBaseUrl))
                 .AddHttpMessageHandler<JwtBearerHandler>();
 
+            builder.Services.AddHttpClient<IPriceComponentsApiClient, PriceComponentsApiClient>(client =>
+                    client.BaseAddress = new Uri(apiBaseUrl))
+                .AddHttpMessageHandler<JwtBearerHandler>();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())
