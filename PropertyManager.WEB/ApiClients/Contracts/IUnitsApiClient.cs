@@ -12,6 +12,8 @@ namespace PropertyManager.WEB.ApiClients.Contracts
 
         Task<UnitDto> GetUnitByIdAsync(int id);
 
+        Task<int?> GetRentingClientIdAsync(int unitId);
+
         Task CreateUnitAsync(CreateUnitDto model);
 
         Task DeleteUnitById(int id);

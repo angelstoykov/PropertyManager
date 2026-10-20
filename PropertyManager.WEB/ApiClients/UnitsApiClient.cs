@@ -31,6 +31,16 @@ public class UnitsApiClient : IUnitsApiClient
             $"{api}/{id}");
     }
 
+    public async Task<int?> GetRentingClientIdAsync(int unitId)
+    {
+        var response = await _httpClient.GetAsync($"{api}/{unitId}/renting-client");
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<int?>();
+    }
+
     public async Task CreateUnitAsync(CreateUnitDto model)
     {
         var response = await _httpClient.PostAsJsonAsync(api, model);

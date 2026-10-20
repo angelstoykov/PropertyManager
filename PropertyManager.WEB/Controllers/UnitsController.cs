@@ -314,6 +314,7 @@ public class UnitsController : Controller
         var properties = await _propertyApiClient.GetAllAsync();
         var lines = await _unitsApiClient.GetPriceComponentsAsync(unit.Id);
         var catalog = await _priceComponentsApiClient.GetAllAsync();
+        var clientId = await _unitsApiClient.GetRentingClientIdAsync(unit.Id);
 
         form ??= new UnitPriceFormViewModel();
         form.UnitId = unit.Id;
@@ -364,6 +365,7 @@ public class UnitsController : Controller
             Status = unit.Status.ToString(),
             PropertyId = unit.PropertyId,
             PropertyName = properties.FirstOrDefault(property => property.Id == unit.PropertyId)?.Name ?? string.Empty,
+            ClientId = clientId,
             PriceLines = lines.Select(line => new UnitPriceLineViewModel
             {
                 Id = line.Id,

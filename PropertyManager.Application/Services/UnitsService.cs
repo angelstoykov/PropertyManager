@@ -140,6 +140,15 @@ namespace PropertyManager.Application.Services
             };
         }
 
+        public async Task<int?> GetRentingClientIdAsync(int unitId)
+        {
+            return await _context.Set<ClientUnit>()
+                .AsNoTracking()
+                .Where(clientUnit => clientUnit.UnitId == unitId)
+                .Select(clientUnit => (int?)clientUnit.ClientId)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId)
         {
             var propertyExists = await _context.Properties

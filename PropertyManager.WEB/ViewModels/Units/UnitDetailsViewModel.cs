@@ -11,6 +11,7 @@
 
         public int PropertyId { get; set; }
         public string PropertyName { get; set; } = null!;
+        public int? ClientId { get; set; }
 
         public IReadOnlyList<UnitPriceLineViewModel> PriceLines { get; set; } = Array.Empty<UnitPriceLineViewModel>();
         public IReadOnlyList<UnitPriceTotalViewModel> Totals { get; set; } = Array.Empty<UnitPriceTotalViewModel>();

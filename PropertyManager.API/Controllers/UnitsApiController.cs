@@ -53,6 +53,16 @@ public class UnitsApiController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id}/renting-client")]
+    public async Task<IActionResult> GetRentingClient(int id)
+    {
+        var clientId = await _unitService.GetRentingClientIdAsync(id);
+        if (clientId == null)
+            return NotFound();
+
+        return Ok(clientId);
+    }
+
     [HttpGet("by-property/{propertyId}")]
     public async Task<IActionResult> GetUnitsByPropertyId(int propertyId)
     {

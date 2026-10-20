@@ -14,6 +14,8 @@ namespace PropertyManager.Application.Services.Contracts
 
         Task<UnitDto> GetUnitByIdAsync(int id);
 
+        Task<int?> GetRentingClientIdAsync(int unitId);
+
         Task<IEnumerable<UnitListItemDto>> GetUnitsByPropertyIdAsync(int propertyId);
     }
 }

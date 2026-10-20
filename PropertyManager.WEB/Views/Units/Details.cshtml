@@ -13,6 +13,14 @@
         <p><strong>Floor:</strong> @Model.Floor</p>
         <p><strong>Status:</strong> @Model.Status</p>
 
+        @if (Model.ClientId is int)
+        {
+            <a asp-controller="Clients" asp-action="UnitFinancialRecords"
+               asp-route-clientId="@Model.ClientId"
+               asp-route-unitId="@Model.Id"
+               class="btn btn-info me-1">Financial Records</a>
+        }
+
         <a asp-controller="Units" asp-action="Index" asp-route-propertyId="@Model.PropertyId" class="btn btn-secondary">
             Back to Units
         </a>
