@@ -27,5 +27,6 @@ namespace PropertyManager.Application.DTOs.Clients
 
         public bool IsActive { get; set; }
         public bool HasLinkedRecords { get; set; }
+        public List<ClientRoleDto> Roles { get; set; } = [];
     }
 }

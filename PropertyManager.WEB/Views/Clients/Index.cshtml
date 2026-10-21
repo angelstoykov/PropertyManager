@@ -3,72 +3,171 @@
 
 @model ClientsIndexViewModel
 
-<h2>Clients</h2>
-<a asp-action="Create" class="btn btn-sm btn-warning mb-3">Create</a>
-
-<form method="get" asp-action="Index" class="d-flex gap-2 mb-3" style="max-width: 36rem;">
-    <input type="search"
-           name="search"
-           value="@Model.Search"
-           class="form-control"
-           placeholder="Search by name, email, or phone"
-           aria-label="Search clients" />
-    <button type="submit" class="btn btn-primary">Search</button>
-    @if (!string.IsNullOrWhiteSpace(Model.Search))
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Clients</h2>
+    @if (!Model.AccessDenied)
     {
-        <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+        <a asp-action="Create" asp-route-role="@Model.CreateRole" class="btn btn-sm btn-warning">Create</a>
     }
-</form>
+</div>
 
-<table class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Clients.Count == 0)
+@if (Model.AccessDenied)
+{
+    <p class="text-muted">You do not have access to clients.</p>
+}
+else
+{
+    <ul class="nav nav-tabs mb-3">
+        @foreach (var tab in Model.Tabs)
         {
-            <tr>
-                <td colspan="6" class="text-muted">
-                    @(string.IsNullOrWhiteSpace(Model.Search)
-                        ? "No clients."
-                        : "No clients match your search.")
-                </td>
-            </tr>
+            <li class="nav-item">
+                <a class="nav-link @(Model.Tab == tab.Key ? "active" : null)"
+                   asp-action="Index"
+                   asp-route-tab="@tab.Key"
+                   asp-route-search="@Model.Search"
+                   asp-route-searchAll="@(Model.SearchAll ? true : null)"
+                   asp-route-status="@Model.Status"
+                   asp-route-clientType="@Model.ClientType"
+                   asp-route-buildingId="@Model.BuildingId">
+                    @tab.Label
+                    <span class="badge bg-secondary">@tab.Count</span>
+                </a>
+            </li>
         }
-        else
-        {
-            @foreach (var client in Model.Clients)
+    </ul>
+
+    <form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+        <input type="hidden" name="tab" value="@Model.Tab" />
+        <div class="col-md-4">
+            <label class="form-label" for="search">Search</label>
+            <input id="search"
+                   type="search"
+                   name="search"
+                   value="@Model.Search"
+                   class="form-control"
+                   placeholder="Search by name, email, phone, or rented unit" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="status">Status</label>
+            <select id="status" name="status" class="form-select">
+                <!option value="">All statuses</!option>
+                <!option value="active" @(Model.Status == "active" ? "selected" : null)>Active</!option>
+                <!option value="inactive" @(Model.Status == "inactive" ? "selected" : null)>Inactive</!option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="clientType">Client type</label>
+            <select id="clientType" name="clientType" class="form-select">
+                <!option value="">All types</!option>
+                <!option value="Individual" @(Model.ClientType == ClientType.Individual ? "selected" : null)>Individual</!option>
+                <!option value="Company" @(Model.ClientType == ClientType.Company ? "selected" : null)>Company</!option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="buildingId">Building</label>
+            <select id="buildingId" name="buildingId" class="form-select">
+                <option value="">All buildings</option>
+                @foreach (var building in Model.Buildings)
+                {
+                    <!option value="@building.Value" @(Model.BuildingId?.ToString() == building.Value ? "selected" : null)>@building.Text</!option>
+                }
+            </select>
+        </div>
+        <div class="col-md-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="searchAll" name="searchAll" value="true" @(Model.SearchAll ? "checked" : null) />
+                <label class="form-check-label" for="searchAll">Search all clients</label>
+            </div>
+        </div>
+        <div class="col-md-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Apply</button>
+            @if (!string.IsNullOrWhiteSpace(Model.Search) || Model.SearchAll || !string.IsNullOrWhiteSpace(Model.Status) || Model.ClientType.HasValue || Model.BuildingId is > 0)
+            {
+                <a asp-action="Index" asp-route-tab="@Model.Tab" class="btn btn-outline-secondary">Clear</a>
+            }
+        </div>
+    </form>
+
+    @if (Model.SearchAll)
+    {
+        <p class="text-muted">Showing matches from every client you can access. This tab keeps its own columns.</p>
+    }
+
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                @foreach (var column in Model.Columns)
+                {
+                    <th>@(column == "RentedUnits" ? "Rented units" : column)</th>
+                }
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Clients.Count == 0)
             {
                 <tr>
-                    <td>@client.DisplayName</td>
-                    <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Company")</td>
-                    <td>@client.Email</td>
-                    <td>@client.Phone</td>
-                    <td>@(client.IsActive ? "Active" : "Inactive")</td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
-                        <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
-                        @if (client.HasLinkedRecords)
-                        {
-                            @if (client.IsActive)
-                            {
-                                <a asp-action="Deactivate" asp-route-id="@client.Id" class="btn btn-sm btn-outline-danger">Deactivate</a>
-                            }
-                        }
-                        else
-                        {
-                            <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
-                        }
+                    <td colspan="@(Model.Columns.Count + 1)" class="text-muted">
+                        @(string.IsNullOrWhiteSpace(Model.Search) ? "No clients." : "No clients match your search.")
                     </td>
                 </tr>
             }
-        }
-    </tbody>
-</table>
+            else
+            {
+                @foreach (var client in Model.Clients)
+                {
+                    <tr>
+                        @foreach (var column in Model.Columns)
+                        {
+                            <td>
+                                @if (column == "Name")
+                                {
+                                    @client.DisplayName
+                                }
+                                else if (column == "Type")
+                                {
+                                    @(client.ClientType == ClientType.Individual ? "Individual" : "Company")
+                                }
+                                else if (column == "Roles")
+                                {
+                                    <partial name="_RoleBadges" model="client.Roles" />
+                                }
+                                else if (column == "Email")
+                                {
+                                    @client.Email
+                                }
+                                else if (column == "Phone")
+                                {
+                                    @client.Phone
+                                }
+                                else if (column == "RentedUnits")
+                                {
+                                    @(string.IsNullOrWhiteSpace(client.RentedUnits) ? "—" : client.RentedUnits)
+                                }
+                                else if (column == "Status")
+                                {
+                                    @(client.IsActive ? "Active" : "Inactive")
+                                }
+                            </td>
+                        }
+                        <td class="text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
+                            <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
+                            @if (client.HasLinkedRecords)
+                            {
+                                @if (client.IsActive)
+                                {
+                                    <a asp-action="Deactivate" asp-route-id="@client.Id" class="btn btn-sm btn-outline-danger">Deactivate</a>
+                                }
+                            }
+                            else
+                            {
+                                <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}

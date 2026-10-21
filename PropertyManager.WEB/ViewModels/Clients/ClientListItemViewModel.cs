@@ -11,5 +11,7 @@ namespace PropertyManager.WEB.ViewModels.Clients
         public string Phone { get; set; } = null!;
         public bool IsActive { get; set; }
         public bool HasLinkedRecords { get; set; }
+        public string RentedUnits { get; set; } = string.Empty;
+        public IReadOnlyList<ClientRoleBadgeViewModel> Roles { get; set; } = [];
     }
 }

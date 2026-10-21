@@ -10,10 +10,12 @@ namespace PropertyManager.Application.Services
     public class UnitFinancialRecordsService : IUnitFinancialRecordsService
     {
         private readonly PropertyManagerDbContext _context;
+        private readonly IClientsService _clientsService;
 
-        public UnitFinancialRecordsService(PropertyManagerDbContext context)
+        public UnitFinancialRecordsService(PropertyManagerDbContext context, IClientsService clientsService)
         {
             _context = context;
+            _clientsService = clientsService;
         }
 
         public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetByClientAndUnitAsync(int clientId, int unitId, int? subtypeId = null)
@@ -43,6 +45,12 @@ namespace PropertyManager.Application.Services
                     CurrencyId = r.CurrencyId,
                     CurrencyCode = r.Currency.Code,
                     CurrencySymbol = r.Currency.Symbol ?? r.Currency.Code,
+                    ContractorClientId = r.ContractorClientId,
+                    ContractorName = r.ContractorClient == null
+                        ? null
+                        : r.ContractorClient.ClientType == ClientType.Company
+                            ? r.ContractorClient.CompanyName
+                            : r.ContractorClient.FirstName + " " + r.ContractorClient.LastName,
                     Comment = r.Comment
                 })
                 .ToListAsync();
@@ -56,6 +64,7 @@ namespace PropertyManager.Application.Services
                 .AsNoTracking()
                 .Include(r => r.Currency)
                 .Include(r => r.Subtype)
+                .Include(r => r.ContractorClient)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UnitId == unitId);
 
             return record == null ? null : MapToDto(record);
@@ -78,6 +87,7 @@ namespace PropertyManager.Application.Services
                 Comment = string.IsNullOrWhiteSpace(dto.Comment) ? null : dto.Comment.Trim()
             };
 
+            await ApplyContractorAsync(record, dto.Type, dto.ContractorClientId);
             _context.UnitFinancialRecords.Add(record);
             await _context.SaveChangesAsync();
 
@@ -106,6 +116,7 @@ namespace PropertyManager.Application.Services
             record.Amount = dto.Amount;
             record.CurrencyId = dto.CurrencyId;
             record.Comment = string.IsNullOrWhiteSpace(dto.Comment) ? null : dto.Comment.Trim();
+            await ApplyContractorAsync(record, dto.Type, dto.ContractorClientId);
 
             await _context.SaveChangesAsync();
         }
@@ -180,7 +191,29 @@ namespace PropertyManager.Application.Services
             CurrencyId = record.CurrencyId,
             CurrencyCode = record.Currency.Code,
             CurrencySymbol = record.Currency.Symbol ?? record.Currency.Code,
+            ContractorClientId = record.ContractorClientId,
+            ContractorName = record.ContractorClient == null
+                ? null
+                : record.ContractorClient.ClientType == ClientType.Company
+                    ? record.ContractorClient.CompanyName
+                    : $"{record.ContractorClient.FirstName} {record.ContractorClient.LastName}".Trim(),
             Comment = record.Comment
         };
+
+        private async Task ApplyContractorAsync(UnitFinancialRecord record, FinancialRecordType type, int? contractorClientId)
+        {
+            if (type != FinancialRecordType.Expense || contractorClientId is null or <= 0)
+            {
+                record.ContractorClientId = null;
+                return;
+            }
+
+            var exists = await _context.Clients.AnyAsync(c => c.Id == contractorClientId.Value);
+            if (!exists)
+                throw new InvalidOperationException("Contractor was not found.");
+
+            record.ContractorClientId = contractorClientId;
+            await _clientsService.EnsureRoleAsync(contractorClientId.Value, ClientRoleType.Contractor);
+        }
     }
 }

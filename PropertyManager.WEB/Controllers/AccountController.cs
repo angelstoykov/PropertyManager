@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PropertyManager.Application.DTOs.Auth;
+using PropertyManager.Domain.Constants;
 using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.Infrastructure;
 using PropertyManager.WEB.ViewModels.Account;
@@ -122,6 +123,9 @@ public class AccountController : Controller
 
         foreach (var role in auth.Roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
+
+        foreach (var access in auth.ClientAccess ?? [])
+            claims.Add(new Claim(ClientAccess.ClaimType, access));
 
         var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
         await HttpContext.SignInAsync(

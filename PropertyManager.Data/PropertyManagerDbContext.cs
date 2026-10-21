@@ -123,6 +123,20 @@ namespace PropertyManager.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<ClientRole>(entity =>
+            {
+                entity.Property(r => r.Role).HasConversion<int>();
+                entity.Property(r => r.StartDate).HasColumnType("date");
+                entity.Property(r => r.IsActive).IsRequired().HasDefaultValue(true);
+
+                entity.HasIndex(r => new { r.ClientId, r.Role }).IsUnique();
+
+                entity.HasOne(r => r.Client)
+                    .WithMany(c => c.Roles)
+                    .HasForeignKey(r => r.ClientId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<ClientUnit>()
                 .HasKey(cu => new { cu.ClientId, cu.UnitId });
 
@@ -157,9 +171,15 @@ namespace PropertyManager.Data
                     .HasForeignKey(r => r.SubtypeId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(r => r.ContractorClient)
+                    .WithMany(c => c.ContractorExpenses)
+                    .HasForeignKey(r => r.ContractorClientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(r => new { r.UnitId, r.Date });
                 entity.HasIndex(r => r.CurrencyId);
                 entity.HasIndex(r => r.SubtypeId);
+                entity.HasIndex(r => r.ContractorClientId);
             });
 
             modelBuilder.Entity<FinancialRecordSubtype>(entity =>
@@ -222,6 +242,7 @@ namespace PropertyManager.Data
         public DbSet<Lease> Leases => Set<Lease>();
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
+        public DbSet<ClientRole> ClientRoles => Set<ClientRole>();
         public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
         public DbSet<FinancialRecordSubtype> FinancialRecordSubtypes => Set<FinancialRecordSubtype>();
         public DbSet<Currency> Currencies => Set<Currency>();

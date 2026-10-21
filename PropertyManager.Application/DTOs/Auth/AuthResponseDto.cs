@@ -7,4 +7,5 @@ public class AuthResponseDto
     public string Email { get; set; } = string.Empty;
     public string? FullName { get; set; }
     public IList<string> Roles { get; set; } = [];
+    public IList<string> ClientAccess { get; set; } = [];
 }

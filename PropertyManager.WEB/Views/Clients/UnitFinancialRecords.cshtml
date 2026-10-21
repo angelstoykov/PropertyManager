@@ -51,6 +51,13 @@
         <input asp-for="FinancialRecord.Comment" class="form-control" />
         <span asp-validation-for="FinancialRecord.Comment" class="text-danger"></span>
     </div>
+    <div class="col-md-3">
+        <label asp-for="FinancialRecord.ContractorClientId" class="form-label"></label>
+        <select asp-for="FinancialRecord.ContractorClientId" class="form-select" asp-items="Model.FinancialRecord.Contractors">
+            <option value="">None</option>
+        </select>
+        <div class="form-text">Saved on expenses. The selected client receives the Contractor role.</div>
+    </div>
     <div class="col-md-1">
         <button type="submit" class="btn btn-primary">Add</button>
     </div>
@@ -91,6 +98,7 @@
             <th>Date</th>
             <th>Amount</th>
             <th>Currency</th>
+            <th>Contractor</th>
             <th>Comment</th>
             <th>Actions</th>
         </tr>
@@ -99,7 +107,7 @@
         @if (!Model.Records.Any())
         {
             <tr>
-                <td colspan="7" class="text-muted">@(Model.SelectedSubtypeId is > 0 ? "No financial records match this subtype." : "No financial records yet.")</td>
+                <td colspan="8" class="text-muted">@(Model.SelectedSubtypeId is > 0 ? "No financial records match this subtype." : "No financial records yet.")</td>
             </tr>
         }
         else
@@ -121,6 +129,7 @@
                     <td>@record.Date.ToString("yyyy-MM-dd")</td>
                     <td>@record.Amount.ToString("N2")</td>
                     <td>@(Model.CurrencySymbols.GetValueOrDefault(record.CurrencyId) ?? record.CurrencySymbol ?? record.CurrencyCode)</td>
+                    <td>@(string.IsNullOrWhiteSpace(record.ContractorName) ? "—" : record.ContractorName)</td>
                     <td>@(string.IsNullOrWhiteSpace(record.Comment) ? "—" : record.Comment)</td>
                     <td class="text-nowrap">
                         <a asp-action="EditFinancialRecord"

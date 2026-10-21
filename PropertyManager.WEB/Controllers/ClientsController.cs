@@ -1,6 +1,9 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.UnitFinancialRecords;
+using PropertyManager.Domain.Constants;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Clients;
@@ -9,23 +12,89 @@ namespace PropertyManager.WEB.Controllers
 {
     public class ClientsController : Controller
     {
+        private const string TabCookieName = "pm.clients.tab";
+
         private readonly IClientsApiClient _clientsApiClient;
         private readonly ICurrencyApiClient _currencyApiClient;
         private readonly IFinancialRecordSubtypesApiClient _subtypesApiClient;
+        private readonly IPropertyApiClient _propertyApiClient;
 
         public ClientsController(IClientsApiClient clientsApiClient,
                                  ICurrencyApiClient currencyApiClient,
-                                 IFinancialRecordSubtypesApiClient subtypesApiClient)
+                                 IFinancialRecordSubtypesApiClient subtypesApiClient,
+                                 IPropertyApiClient propertyApiClient)
         {
             _clientsApiClient = clientsApiClient;
             _currencyApiClient = currencyApiClient;
             _subtypesApiClient = subtypesApiClient;
+            _propertyApiClient = propertyApiClient;
         }
 
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(
+            string? tab,
+            string? search,
+            bool searchAll,
+            string? status,
+            ClientType? clientType,
+            int? buildingId)
         {
-            var clients = (await _clientsApiClient.GetAllAsync(search))
-                .Select(c => new ClientListItemViewModel
+            var permitted = PermittedTabs(CurrentAccess());
+            if (permitted.Count == 0)
+                return View(new ClientsIndexViewModel { AccessDenied = true });
+
+            var normalized = NormalizeTab(tab);
+            status = NormalizeStatus(status);
+            if (string.IsNullOrEmpty(normalized) || !permitted.Contains(normalized))
+            {
+                var remembered = ReadRememberedTab();
+                var target = remembered != null && permitted.Contains(remembered)
+                    ? remembered
+                    : permitted[0];
+                return RedirectToAction(nameof(Index), new
+                {
+                    tab = target,
+                    search,
+                    searchAll = searchAll ? true : (bool?)null,
+                    status,
+                    clientType,
+                    buildingId
+                });
+            }
+
+            RememberTab(normalized);
+
+            var result = await _clientsApiClient.GetAllAsync(new ClientListQuery
+            {
+                Tab = normalized,
+                Search = search,
+                SearchAll = searchAll,
+                Status = status,
+                ClientType = clientType,
+                BuildingId = buildingId
+            });
+            var properties = await _propertyApiClient.GetAllAsync();
+
+            return View(new ClientsIndexViewModel
+            {
+                Tab = normalized,
+                Search = search,
+                SearchAll = searchAll,
+                Status = status,
+                ClientType = clientType,
+                BuildingId = buildingId,
+                CreateRole = CreateRoleFor(normalized),
+                Columns = ColumnsFor(normalized),
+                Tabs = permitted.Select(key => new ClientTabViewModel
+                {
+                    Key = key,
+                    Label = TabLabel(key),
+                    Count = CountFor(key, result)
+                }).ToList(),
+                Buildings = properties
+                    .OrderBy(property => property.Name)
+                    .Select(property => new SelectListItem(property.Name, property.Id.ToString()))
+                    .ToList(),
+                Clients = result.Clients.Select(c => new ClientListItemViewModel
                 {
                     Id = c.Id,
                     ClientType = c.ClientType,
@@ -33,28 +102,35 @@ namespace PropertyManager.WEB.Controllers
                     Email = c.Email,
                     Phone = c.Phone,
                     IsActive = c.IsActive,
-                    HasLinkedRecords = c.HasLinkedRecords
-                })
-                .ToList();
-
-            return View(new ClientsIndexViewModel
-            {
-                Search = search,
-                Clients = clients
+                    HasLinkedRecords = c.HasLinkedRecords,
+                    RentedUnits = string.Join(", ", c.RentedUnitLabels),
+                    Roles = c.Roles.Select(ClientRolePresentation.ToBadge).ToList()
+                }).ToList()
             });
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string? role)
         {
-            return View(new ClientFormViewModel());
+            var model = new ClientFormViewModel();
+            var allowed = CurrentAccess();
+            if (Enum.TryParse<ClientRoleType>(role, ignoreCase: true, out var parsed) && allowed.Contains(parsed))
+                model.SelectedRoles = [parsed];
+            else if (allowed.Count == 1)
+                model.SelectedRoles = [allowed[0]];
+
+            ApplyRoleOptions(model, null);
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> Create(ClientFormViewModel model)
         {
             if (!ModelState.IsValid)
+            {
+                ApplyRoleOptions(model, null);
                 return View(model);
+            }
 
             var dto = MapToCreateDto(model);
 
@@ -65,11 +141,13 @@ namespace PropertyManager.WEB.Controllers
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
+                ApplyRoleOptions(model, null);
                 return View(model);
             }
             catch
             {
                 ModelState.AddModelError("", "Error creating client.");
+                ApplyRoleOptions(model, null);
                 return View(model);
             }
 
@@ -83,14 +161,28 @@ namespace PropertyManager.WEB.Controllers
             if (client == null)
                 return NotFound();
 
-            return View(MapToFormViewModel(client));
+            var model = MapToFormViewModel(client);
+            var allowed = CurrentAccess();
+            model.SelectedRoles = client.Roles
+                .Where(role => role.IsActive && allowed.Contains(role.Role))
+                .Select(role => role.Role)
+                .ToList();
+            ApplyRoleOptions(model, client.Roles);
+            return View(model);
         }
 
         [HttpPost]
         public async Task<IActionResult> Edit(ClientFormViewModel model)
         {
+            var client = await _clientsApiClient.GetByIdAsync(model.Id);
+            if (client == null)
+                return NotFound();
+
             if (!ModelState.IsValid)
+            {
+                ApplyRoleOptions(model, client.Roles);
                 return View(model);
+            }
 
             var dto = MapToEditDto(model);
 
@@ -101,11 +193,13 @@ namespace PropertyManager.WEB.Controllers
             catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError("", ex.Message);
+                ApplyRoleOptions(model, client.Roles);
                 return View(model);
             }
             catch
             {
                 ModelState.AddModelError("", "Error updating client.");
+                ApplyRoleOptions(model, client.Roles);
                 return View(model);
             }
 
@@ -253,7 +347,7 @@ namespace PropertyManager.WEB.Controllers
                 },
                 Records = records
             };
-            await model.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient);
+            await model.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient, _clientsApiClient);
             return View(model);
         }
 
@@ -273,12 +367,18 @@ namespace PropertyManager.WEB.Controllers
                 Date = record.Date,
                 Amount = record.Amount,
                 CurrencyId = record.CurrencyId,
+                ContractorClientId = record.ContractorClientId,
                 Comment = record.Comment
             };
 
             try
             {
                 await _clientsApiClient.CreateFinancialRecordAsync(record.ClientId, dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
             }
             catch
             {
@@ -311,12 +411,12 @@ namespace PropertyManager.WEB.Controllers
                 Date = record.Date,
                 Amount = record.Amount,
                 CurrencyId = record.CurrencyId,
+                ContractorClientId = record.ContractorClientId,
                 Comment = record.Comment,
                 FilterSubtypeId = subtypeId
             };
 
-            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
-            await model.LoadSubtypesAsync(_subtypesApiClient);
+            await LoadFinancialRecordLookupsAsync(model);
 
             return View(model);
         }
@@ -339,6 +439,7 @@ namespace PropertyManager.WEB.Controllers
                 Date = model.Date,
                 Amount = model.Amount,
                 CurrencyId = model.CurrencyId,
+                ContractorClientId = model.ContractorClientId,
                 Comment = model.Comment
             };
 
@@ -351,6 +452,12 @@ namespace PropertyManager.WEB.Controllers
                     await LoadFinancialRecordLookupsAsync(model);
                     return View(model);
                 }
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await LoadFinancialRecordLookupsAsync(model);
+                return View(model);
             }
             catch
             {
@@ -386,6 +493,7 @@ namespace PropertyManager.WEB.Controllers
         {
             await model.LoadActiveCurrenciesAsync(_currencyApiClient);
             await model.LoadSubtypesAsync(_subtypesApiClient);
+            await model.LoadContractorsAsync(_clientsApiClient);
         }
 
         private async Task<UnitFinancialRecordsViewModel> RebuildFinancialRecordsViewModelAsync(UnitFinancialRecordFormViewModel model)
@@ -407,7 +515,7 @@ namespace PropertyManager.WEB.Controllers
                 FinancialRecord = model,
                 Records = records
             };
-            await vm.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient);
+            await vm.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient, _clientsApiClient);
             return vm;
         }
 
@@ -426,7 +534,8 @@ namespace PropertyManager.WEB.Controllers
             LegalRepresentative = model.LegalRepresentative,
             Address = model.Address,
             BankAccount = model.BankAccount,
-            Notes = model.Notes
+            Notes = model.Notes,
+            Roles = model.SelectedRoles
         };
 
         private static EditClientDto MapToEditDto(ClientFormViewModel model) => new()
@@ -446,7 +555,8 @@ namespace PropertyManager.WEB.Controllers
             Address = model.Address,
             BankAccount = model.BankAccount,
             Notes = model.Notes,
-            IsActive = model.IsActive
+            IsActive = model.IsActive,
+            Roles = model.SelectedRoles
         };
 
         private static ClientFormViewModel MapToFormViewModel(ClientDto client) => new()
@@ -484,9 +594,122 @@ namespace PropertyManager.WEB.Controllers
                 ClientId = client.Id,
                 ClientType = client.ClientType,
                 ClientDisplayName = GetDisplayName(client),
+                Roles = client.Roles.Select(ClientRolePresentation.ToBadge).ToList(),
                 RentedUnits = rentedUnits,
                 AvailableProperties = availableProperties
             };
         }
+
+        private IReadOnlyList<ClientRoleType> CurrentAccess() => ClientAccess.Resolve(User);
+
+        private void ApplyRoleOptions(ClientFormViewModel model, IReadOnlyList<ClientRoleDto>? roles)
+        {
+            var allowed = CurrentAccess();
+            model.AssignableRoles = allowed.ToList();
+            model.RoleDetails = allowed.Select(role =>
+            {
+                var existing = roles?.FirstOrDefault(item => item.Role == role);
+                return new ClientRoleOptionViewModel
+                {
+                    Role = role,
+                    StartDate = existing?.StartDate,
+                    HasRole = existing != null,
+                    IsActive = existing?.IsActive ?? false
+                };
+            }).ToList();
+        }
+
+        private void RememberTab(string tab)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            Response.Cookies.Append(TabCookieName, $"{userId}|{tab}", new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                SameSite = SameSiteMode.Lax,
+                Secure = Request.IsHttps,
+                Path = "/"
+            });
+        }
+
+        private string? ReadRememberedTab()
+        {
+            if (!Request.Cookies.TryGetValue(TabCookieName, out var value))
+                return null;
+
+            var separator = value.IndexOf('|');
+            if (separator < 0)
+                return null;
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            if (!string.Equals(value[..separator], userId, StringComparison.Ordinal))
+                return null;
+
+            return NormalizeTab(value[(separator + 1)..]);
+        }
+
+        private static IReadOnlyList<string> PermittedTabs(IReadOnlyList<ClientRoleType> allowed)
+        {
+            if (allowed.Count == 0)
+                return [];
+
+            var tabs = new List<string> { "all" };
+            if (allowed.Contains(ClientRoleType.Owner))
+                tabs.Add("owners");
+            if (allowed.Contains(ClientRoleType.Tenant))
+                tabs.Add("tenants");
+            if (allowed.Contains(ClientRoleType.Contractor))
+                tabs.Add("contractors");
+            return tabs;
+        }
+
+        private static string NormalizeTab(string? tab) => tab?.Trim().ToLowerInvariant() switch
+        {
+            "all" => "all",
+            "owners" or "owner" => "owners",
+            "tenants" or "tenant" => "tenants",
+            "contractors" or "contractor" => "contractors",
+            _ => string.Empty
+        };
+
+        private static string? NormalizeStatus(string? status) => status?.Trim().ToLowerInvariant() switch
+        {
+            "active" => "active",
+            "inactive" => "inactive",
+            _ => null
+        };
+
+        private static ClientRoleType? CreateRoleFor(string tab) => tab switch
+        {
+            "owners" => ClientRoleType.Owner,
+            "tenants" => ClientRoleType.Tenant,
+            "contractors" => ClientRoleType.Contractor,
+            _ => null
+        };
+
+        private static IReadOnlyList<string> ColumnsFor(string tab) => tab switch
+        {
+            "owners" => ["Name", "Roles", "Email", "Phone", "Status"],
+            "tenants" => ["Name", "Roles", "RentedUnits", "Phone", "Status"],
+            "contractors" => ["Name", "Type", "Roles", "Phone", "Email", "Status"],
+            _ => ["Name", "Type", "Roles", "Email", "Phone", "Status"]
+        };
+
+        private static string TabLabel(string tab) => tab switch
+        {
+            "owners" => "Owners",
+            "tenants" => "Tenants",
+            "contractors" => "Contractors",
+            _ => "All"
+        };
+
+        private static int CountFor(string tab, ClientListResultDto result) => tab switch
+        {
+            "owners" => result.OwnerCount,
+            "tenants" => result.TenantCount,
+            "contractors" => result.ContractorCount,
+            _ => result.AllCount
+        };
     }
 }

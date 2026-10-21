@@ -25,6 +25,9 @@ namespace PropertyManager.Domain.Models.Entities
         public int CurrencyId { get; set; }
         public Currency Currency { get; set; } = null!;
 
+        public int? ContractorClientId { get; set; }
+        public Client? ContractorClient { get; set; }
+
         [MaxLength(500)]
         public string? Comment { get; set; }
     }

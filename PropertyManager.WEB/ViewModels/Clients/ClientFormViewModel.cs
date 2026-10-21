@@ -34,6 +34,12 @@ namespace PropertyManager.WEB.ViewModels.Clients
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
 
+        public List<ClientRoleType> SelectedRoles { get; set; } = [];
+
+        public List<ClientRoleType> AssignableRoles { get; set; } = [];
+
+        public List<ClientRoleOptionViewModel> RoleDetails { get; set; } = [];
+
         [Display(Name = "First name")]
         [MaxLength(100)]
         public string? FirstName { get; set; }
@@ -88,6 +94,9 @@ namespace PropertyManager.WEB.ViewModels.Clients
                 if (string.IsNullOrWhiteSpace(LegalRepresentative))
                     yield return new ValidationResult("Legal representative is required.", [nameof(LegalRepresentative)]);
             }
+
+            if (Id == 0 && (SelectedRoles == null || SelectedRoles.Count == 0))
+                yield return new ValidationResult("Select at least one role.", [nameof(SelectedRoles)]);
 
             if (!string.IsNullOrWhiteSpace(BankAccount))
             {

@@ -6,6 +6,7 @@ using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Properties;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
+using PropertyManager.Domain.Constants;
 using PropertyManager.Domain.Models.Entities;
 using PropertyManager.Domain.Models.Enums;
 
@@ -26,10 +27,22 @@ namespace PropertyManager.Application.Services
             _searchFields = ParseSearchFields(searchOptions.Value.Fields);
         }
 
-        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync(string? search = null)
+        public async Task<ClientListResultDto> GetAllAsync(ClientListQuery query, IReadOnlyList<ClientRoleType> allowedRoles)
         {
-            var clients = await _context.Clients
-                .AsNoTracking()
+            var allowed = allowedRoles.Distinct().ToList();
+            var filtered = ApplyListFilters(_context.Clients.AsNoTracking(), query);
+            var visible = WhereVisible(filtered, allowed);
+
+            var allCount = await visible.CountAsync();
+            var ownerCount = await visible.CountAsync(c =>
+                c.Roles.Any(r => r.IsActive && r.Role == ClientRoleType.Owner));
+            var tenantCount = await visible.CountAsync(c =>
+                c.Roles.Any(r => r.IsActive && r.Role == ClientRoleType.Tenant));
+            var contractorCount = await visible.CountAsync(c =>
+                c.Roles.Any(r => r.IsActive && r.Role == ClientRoleType.Contractor));
+
+            var listed = ApplyTab(visible, query, allowed);
+            var clients = await listed
                 .OrderByDescending(c => c.IsActive)
                 .ThenBy(c => c.ClientType)
                 .ThenBy(c => c.CompanyName)
@@ -45,36 +58,67 @@ namespace PropertyManager.Application.Services
                     Email = c.Email,
                     Phone = c.Phone,
                     IsActive = c.IsActive,
-                    HasLinkedRecords = c.ClientUnits.Any()
+                    HasLinkedRecords = c.ClientUnits.Any() || c.ContractorExpenses.Any(),
+                    Roles = c.Roles
+                        .Where(r => allowed.Contains(r.Role))
+                        .Select(r => new ClientRoleDto
+                        {
+                            Role = r.Role,
+                            StartDate = r.StartDate,
+                            IsActive = r.IsActive
+                        })
+                        .ToList(),
+                    RentedUnitLabels = c.ClientUnits
+                        .Select(cu => cu.Unit.Property.Name + " · " + cu.Unit.UnitNumber)
+                        .ToList()
                 })
                 .ToListAsync();
 
-            if (string.IsNullOrWhiteSpace(search) || _searchFields.Count == 0)
-                return clients;
+            foreach (var client in clients)
+            {
+                client.RentedUnitLabels.Sort(StringComparer.CurrentCultureIgnoreCase);
+                client.Roles = client.Roles.OrderBy(r => r.Role).ToList();
+            }
 
-            var term = search.Trim();
-            return clients.Where(c => MatchesSearch(c, term)).ToList();
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var term = query.Search.Trim();
+                clients = clients.Where(c => MatchesSearch(c, term)).ToList();
+            }
+
+            return new ClientListResultDto
+            {
+                Clients = clients,
+                AllCount = allCount,
+                OwnerCount = ownerCount,
+                TenantCount = tenantCount,
+                ContractorCount = contractorCount
+            };
         }
 
-        public async Task<ClientDto?> GetByIdAsync(int id)
+        public async Task<ClientDto?> GetByIdAsync(int id, IReadOnlyList<ClientRoleType> allowedRoles)
         {
+            var allowed = allowedRoles.Distinct().ToList();
             var client = await _context.Clients
                 .AsNoTracking()
                 .Include(c => c.ClientUnits)
+                .Include(c => c.Roles)
+                .Include(c => c.ContractorExpenses)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (client == null)
+            if (client == null || !IsVisible(client, allowed))
                 return null;
 
-            return MapToDto(client);
+            return MapToDto(client, allowed);
         }
 
-        public async Task<int> CreateAsync(CreateClientDto dto)
+        public async Task<int> CreateAsync(CreateClientDto dto, IReadOnlyList<ClientRoleType> allowedRoles)
         {
             var client = new Client { IsActive = true };
             ApplyClient(client, dto.ClientType, dto.Email, dto.Phone, dto.FirstName, dto.LastName,
                 dto.PersonalId, dto.DateOfBirth, dto.CompanyName, dto.CompanyNumber, dto.VatNumber,
                 dto.LegalRepresentative, dto.Address, dto.BankAccount, dto.Notes);
+            AddSelectedRoles(client, dto.Roles, allowedRoles);
             await EnsureIdentifierIsUniqueAsync(null, client.PersonalId, client.CompanyNumber);
 
             _context.Clients.Add(client);
@@ -83,9 +127,11 @@ namespace PropertyManager.Application.Services
             return client.Id;
         }
 
-        public async Task EditAsync(EditClientDto dto)
+        public async Task EditAsync(EditClientDto dto, IReadOnlyList<ClientRoleType> allowedRoles)
         {
-            var client = await _context.Clients.FindAsync(dto.Id);
+            var client = await _context.Clients
+                .Include(c => c.Roles)
+                .FirstOrDefaultAsync(c => c.Id == dto.Id);
             if (client == null)
                 throw new InvalidOperationException("Client not found.");
 
@@ -93,6 +139,7 @@ namespace PropertyManager.Application.Services
                 dto.PersonalId, dto.DateOfBirth, dto.CompanyName, dto.CompanyNumber, dto.VatNumber,
                 dto.LegalRepresentative, dto.Address, dto.BankAccount, dto.Notes);
             client.IsActive = dto.IsActive;
+            ApplyRoleSelection(client, dto.Roles, allowedRoles);
             await EnsureIdentifierIsUniqueAsync(client.Id, client.PersonalId, client.CompanyNumber);
 
             await _context.SaveChangesAsync();
@@ -107,7 +154,10 @@ namespace PropertyManager.Application.Services
             if (client == null)
                 return;
 
-            if (client.ClientUnits.Count > 0)
+            var hasContractorExpenses = await _context.UnitFinancialRecords
+                .AnyAsync(r => r.ContractorClientId == id);
+
+            if (client.ClientUnits.Count > 0 || hasContractorExpenses)
                 throw new InvalidOperationException(
                     "This client is linked to records and can only be deactivated.");
 
@@ -123,6 +173,27 @@ namespace PropertyManager.Application.Services
 
             client.IsActive = false;
             await _context.SaveChangesAsync();
+        }
+
+        public async Task EnsureRoleAsync(int clientId, ClientRoleType role, DateTime? startDate = null)
+        {
+            var existing = await _context.ClientRoles
+                .FirstOrDefaultAsync(r => r.ClientId == clientId && r.Role == role);
+
+            if (existing == null)
+            {
+                _context.ClientRoles.Add(new ClientRole
+                {
+                    ClientId = clientId,
+                    Role = role,
+                    StartDate = (startDate ?? DateTime.Today).Date,
+                    IsActive = true
+                });
+                return;
+            }
+
+            if (!existing.IsActive)
+                existing.IsActive = true;
         }
 
         public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)
@@ -196,11 +267,13 @@ namespace PropertyManager.Application.Services
                 throw new InvalidOperationException("Unit not found.");
 
             var isAlreadyAdded = client.ClientUnits.Any(cu => cu.UnitId == unitId);
-            if (isAlreadyAdded)
-                return;
+            if (!isAlreadyAdded)
+            {
+                client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
+                unit.Status = UnitStatus.Occupied;
+            }
 
-            client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
-            unit.Status = UnitStatus.Occupied;
+            await EnsureRoleAsync(clientId, ClientRoleType.Tenant);
             await _context.SaveChangesAsync();
         }
 
@@ -254,7 +327,116 @@ namespace PropertyManager.Application.Services
                     return true;
             }
 
-            return false;
+            return client.RentedUnitLabels.Any(label =>
+                label.Contains(term, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static IQueryable<Client> ApplyListFilters(IQueryable<Client> query, ClientListQuery filters)
+        {
+            var status = filters.Status?.Trim().ToLowerInvariant();
+            if (status == "active")
+                query = query.Where(c => c.IsActive);
+            else if (status == "inactive")
+                query = query.Where(c => !c.IsActive);
+
+            if (filters.ClientType is ClientType clientType)
+                query = query.Where(c => c.ClientType == clientType);
+
+            if (filters.BuildingId is > 0)
+            {
+                var buildingId = filters.BuildingId.Value;
+                query = query.Where(c => c.ClientUnits.Any(cu => cu.Unit.PropertyId == buildingId));
+            }
+
+            return query;
+        }
+
+        private static IQueryable<Client> WhereVisible(IQueryable<Client> query, List<ClientRoleType> allowed)
+        {
+            var seesUnassigned = ClientAccess.All.All(allowed.Contains);
+            return query.Where(c =>
+                c.Roles.Any(r => r.IsActive && allowed.Contains(r.Role))
+                || (seesUnassigned && !c.Roles.Any(r => r.IsActive)));
+        }
+
+        private static bool IsVisible(Client client, List<ClientRoleType> allowed)
+        {
+            var seesUnassigned = ClientAccess.All.All(allowed.Contains);
+            var hasVisibleRole = client.Roles.Any(r => r.IsActive && allowed.Contains(r.Role));
+            var hasNoActiveRole = !client.Roles.Any(r => r.IsActive);
+            return hasVisibleRole || (seesUnassigned && hasNoActiveRole);
+        }
+
+        private static IQueryable<Client> ApplyTab(
+            IQueryable<Client> query,
+            ClientListQuery filters,
+            List<ClientRoleType> allowed)
+        {
+            if (filters.SearchAll)
+                return query;
+
+            var tabRole = filters.Tab?.Trim().ToLowerInvariant() switch
+            {
+                "owners" or "owner" => ClientRoleType.Owner,
+                "tenants" or "tenant" => ClientRoleType.Tenant,
+                "contractors" or "contractor" => ClientRoleType.Contractor,
+                _ => (ClientRoleType?)null
+            };
+
+            if (tabRole is not ClientRoleType role)
+                return query;
+
+            if (!allowed.Contains(role))
+                return query.Where(c => c.Id < 0);
+
+            return query.Where(c => c.Roles.Any(r => r.IsActive && r.Role == role));
+        }
+
+        private static void AddSelectedRoles(Client client, IEnumerable<ClientRoleType>? roles, IReadOnlyList<ClientRoleType> allowed)
+        {
+            var selected = (roles ?? []).Where(allowed.Contains).Distinct().ToList();
+            if (selected.Count == 0)
+                throw new InvalidOperationException("Select at least one role.");
+
+            var today = DateTime.Today;
+            foreach (var role in selected)
+            {
+                client.Roles.Add(new ClientRole
+                {
+                    Role = role,
+                    StartDate = today,
+                    IsActive = true
+                });
+            }
+        }
+
+        private static void ApplyRoleSelection(Client client, IEnumerable<ClientRoleType>? roles, IReadOnlyList<ClientRoleType> allowed)
+        {
+            var selected = (roles ?? []).Where(allowed.Contains).ToHashSet();
+            foreach (var role in allowed.Distinct())
+            {
+                var existing = client.Roles.FirstOrDefault(r => r.Role == role);
+                if (selected.Contains(role))
+                {
+                    if (existing == null)
+                    {
+                        client.Roles.Add(new ClientRole
+                        {
+                            Role = role,
+                            StartDate = DateTime.Today,
+                            IsActive = true
+                        });
+                    }
+                    else if (!existing.IsActive)
+                    {
+                        existing.IsActive = true;
+                    }
+                }
+                else if (existing is { IsActive: true })
+                {
+                    existing.IsActive = false;
+                }
+            }
         }
 
         private static void ApplyClient(
@@ -370,7 +552,7 @@ namespace PropertyManager.Application.Services
             return value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
         }
 
-        private static ClientDto MapToDto(Client client) => new()
+        private static ClientDto MapToDto(Client client, List<ClientRoleType> allowed) => new()
         {
             Id = client.Id,
             ClientType = client.ClientType,
@@ -388,7 +570,17 @@ namespace PropertyManager.Application.Services
             BankAccount = client.BankAccount,
             Notes = client.Notes,
             IsActive = client.IsActive,
-            HasLinkedRecords = client.ClientUnits.Count > 0
+            HasLinkedRecords = client.ClientUnits.Count > 0 || client.ContractorExpenses.Count > 0,
+            Roles = client.Roles
+                .Where(r => allowed.Contains(r.Role))
+                .OrderBy(r => r.Role)
+                .Select(r => new ClientRoleDto
+                {
+                    Role = r.Role,
+                    StartDate = r.StartDate,
+                    IsActive = r.IsActive
+                })
+                .ToList()
         };
     }
 }

@@ -41,6 +41,11 @@ namespace PropertyManager.WEB.ViewModels.Clients
         [Display(Name = "Comment")]
         public string? Comment { get; set; }
 
+        [Display(Name = "Contractor")]
+        public int? ContractorClientId { get; set; }
+
+        public IReadOnlyList<SelectListItem> Contractors { get; set; } = Array.Empty<SelectListItem>();
+
         public IReadOnlyList<SelectListItem> Currencies { get; set; } = Array.Empty<SelectListItem>();
 
         public IReadOnlyList<FinancialRecordSubtypeOption> SubtypeOptions { get; set; } = Array.Empty<FinancialRecordSubtypeOption>();
@@ -59,6 +64,15 @@ namespace PropertyManager.WEB.ViewModels.Clients
 
             if (CurrencyId == 0 && active.Count > 0)
                 CurrencyId = active[0].Id;
+        }
+
+        public async Task LoadContractorsAsync(IClientsApiClient clientsApiClient)
+        {
+            var clients = await clientsApiClient.GetAllAsync(new PropertyManager.Application.DTOs.Clients.ClientListQuery { Tab = "all" });
+            Contractors = clients.Clients
+                .OrderBy(client => client.DisplayName)
+                .Select(client => new SelectListItem(client.DisplayName, client.Id.ToString()))
+                .ToList();
         }
 
         public async Task LoadSubtypesAsync(IFinancialRecordSubtypesApiClient subtypesApiClient)

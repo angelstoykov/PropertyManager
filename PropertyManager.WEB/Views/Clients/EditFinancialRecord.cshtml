@@ -52,6 +52,14 @@
         <span asp-validation-for="Comment" class="text-danger"></span>
     </div>
 
+    <div class="mb-3">
+        <label asp-for="ContractorClientId" class="form-label"></label>
+        <select asp-for="ContractorClientId" class="form-select" asp-items="Model.Contractors">
+            <option value="">None</option>
+        </select>
+        <div class="form-text">Saved on expenses. The selected client receives the Contractor role.</div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Save</button>
     <a asp-action="UnitFinancialRecords"
        asp-route-clientId="@Model.ClientId"

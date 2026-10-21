@@ -18,14 +18,29 @@ namespace PropertyManager.WEB.ApiClients
             _httpClient = httpClient;
         }
 
-        public async Task<IReadOnlyList<ClientListItemDto>> GetAllAsync(string? search = null)
+        public async Task<ClientListResultDto> GetAllAsync(ClientListQuery? query = null)
         {
-            var url = string.IsNullOrWhiteSpace(search)
-                ? api
-                : QueryHelpers.AddQueryString(api, "search", search.Trim());
+            query ??= new ClientListQuery();
+            var parameters = new Dictionary<string, string?>();
+            if (!string.IsNullOrWhiteSpace(query.Search))
+                parameters["search"] = query.Search.Trim();
+            if (!string.IsNullOrWhiteSpace(query.Tab))
+                parameters["tab"] = query.Tab;
+            if (query.SearchAll)
+                parameters["searchAll"] = "true";
+            if (!string.IsNullOrWhiteSpace(query.Status))
+                parameters["status"] = query.Status;
+            if (query.ClientType.HasValue)
+                parameters["clientType"] = query.ClientType.Value.ToString();
+            if (query.BuildingId is > 0)
+                parameters["buildingId"] = query.BuildingId.Value.ToString();
 
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientListItemDto>>(url);
-            return result ?? Array.Empty<ClientListItemDto>();
+            var url = parameters.Count == 0
+                ? api
+                : QueryHelpers.AddQueryString(api, parameters);
+
+            var result = await _httpClient.GetFromJsonAsync<ClientListResultDto>(url);
+            return result ?? new ClientListResultDto();
         }
 
         public async Task<ClientDto?> GetByIdAsync(int id)

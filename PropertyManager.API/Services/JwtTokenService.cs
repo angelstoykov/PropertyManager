@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using PropertyManager.Data.Identity;
+using PropertyManager.Domain.Constants;
 
 namespace PropertyManager.API.Services;
 
@@ -15,7 +16,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string GenerateToken(ApplicationUser user, IList<string> roles)
+    public string GenerateToken(ApplicationUser user, IList<string> roles, IEnumerable<string>? clientAccess = null)
     {
         var jwtSection = _configuration.GetSection("Jwt");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSection["Key"]!));
@@ -34,6 +35,12 @@ public class JwtTokenService : IJwtTokenService
 
         foreach (var role in roles)
             claims.Add(new Claim(ClaimTypes.Role, role));
+
+        if (clientAccess != null)
+        {
+            foreach (var access in clientAccess.Where(value => !string.IsNullOrWhiteSpace(value)).Distinct())
+                claims.Add(new Claim(ClientAccess.ClaimType, access));
+        }
 
         var token = new JwtSecurityToken(
             issuer: jwtSection["Issuer"],

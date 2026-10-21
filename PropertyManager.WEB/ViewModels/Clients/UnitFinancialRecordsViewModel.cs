@@ -21,10 +21,12 @@ namespace PropertyManager.WEB.ViewModels.Clients
 
         public async Task LoadLookupsAsync(
             ICurrencyApiClient currencyApiClient,
-            IFinancialRecordSubtypesApiClient subtypesApiClient)
+            IFinancialRecordSubtypesApiClient subtypesApiClient,
+            IClientsApiClient clientsApiClient)
         {
             await FinancialRecord.LoadActiveCurrenciesAsync(currencyApiClient);
             await FinancialRecord.LoadSubtypesAsync(subtypesApiClient);
+            await FinancialRecord.LoadContractorsAsync(clientsApiClient);
 
             CurrencySymbols = FinancialRecord.Currencies
                 .Where(item => int.TryParse(item.Value, out _))

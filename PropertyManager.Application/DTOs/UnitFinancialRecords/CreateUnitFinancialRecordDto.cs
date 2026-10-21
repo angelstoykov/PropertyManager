@@ -10,6 +10,7 @@ namespace PropertyManager.Application.DTOs.UnitFinancialRecords
         public DateTime Date { get; set; }
         public decimal Amount { get; set; }
         public int CurrencyId { get; set; }
+        public int? ContractorClientId { get; set; }
         public string? Comment { get; set; }
     }
 }

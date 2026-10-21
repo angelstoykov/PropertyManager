@@ -11,5 +11,7 @@ namespace PropertyManager.Application.DTOs.Clients
         public string Phone { get; set; } = null!;
         public bool IsActive { get; set; }
         public bool HasLinkedRecords { get; set; }
+        public List<ClientRoleDto> Roles { get; set; } = [];
+        public List<string> RentedUnitLabels { get; set; } = [];
     }
 }

@@ -22,5 +22,7 @@ namespace PropertyManager.Application.DTOs.Clients
         public string? Address { get; set; }
         public string? BankAccount { get; set; }
         public string? Notes { get; set; }
+
+        public List<ClientRoleType> Roles { get; set; } = [];
     }
 }

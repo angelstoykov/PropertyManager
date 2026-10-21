@@ -1,0 +1,13 @@
+@model IEnumerable<PropertyManager.WEB.ViewModels.Clients.ClientRoleBadgeViewModel>
+
+@foreach (var role in Model)
+{
+    if (role.IsActive)
+    {
+        <span class="badge @role.CssClass me-1">@role.Label</span>
+    }
+    else
+    {
+        <span class="badge border text-secondary me-1">@role.Label</span>
+    }
+}

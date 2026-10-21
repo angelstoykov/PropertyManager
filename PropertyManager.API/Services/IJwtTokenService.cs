@@ -4,5 +4,5 @@ namespace PropertyManager.API.Services;
 
 public interface IJwtTokenService
 {
-    string GenerateToken(ApplicationUser user, IList<string> roles);
+    string GenerateToken(ApplicationUser user, IList<string> roles, IEnumerable<string>? clientAccess = null);
 }

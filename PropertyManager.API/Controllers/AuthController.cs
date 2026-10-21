@@ -58,13 +58,20 @@ public class AuthController : ControllerBase
     private async Task<AuthResponseDto> BuildAuthResponseAsync(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
+        var userClaims = await _userManager.GetClaimsAsync(user);
+        var clientAccess = userClaims
+            .Where(claim => claim.Type == ClientAccess.ClaimType)
+            .Select(claim => claim.Value)
+            .Distinct()
+            .ToList();
         return new AuthResponseDto
         {
-            Token = _jwtTokenService.GenerateToken(user, roles),
+            Token = _jwtTokenService.GenerateToken(user, roles, clientAccess),
             UserId = user.Id,
             Email = user.Email ?? string.Empty,
             FullName = user.FullName,
-            Roles = roles
+            Roles = roles,
+            ClientAccess = clientAccess
         };
     }
 }

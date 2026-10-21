@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.Application.Services.Contracts;
+using PropertyManager.Domain.Constants;
+using PropertyManager.Domain.Models.Enums;
 
 namespace PropertyManager.API.Controllers
 {
@@ -23,16 +25,16 @@ namespace PropertyManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] string? search)
+        public async Task<IActionResult> GetAll([FromQuery] ClientListQuery query)
         {
-            var result = await _clientsService.GetAllAsync(search);
+            var result = await _clientsService.GetAllAsync(query, CurrentAccess());
             return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var client = await _clientsService.GetByIdAsync(id);
+            var client = await _clientsService.GetByIdAsync(id, CurrentAccess());
             if (client == null)
                 return NotFound();
 
@@ -44,7 +46,7 @@ namespace PropertyManager.API.Controllers
         {
             try
             {
-                var id = await _clientsService.CreateAsync(dto);
+                var id = await _clientsService.CreateAsync(dto, CurrentAccess());
                 return CreatedAtAction(nameof(GetById), new { id }, id);
             }
             catch (InvalidOperationException ex)
@@ -59,9 +61,12 @@ namespace PropertyManager.API.Controllers
             if (id != dto.Id)
                 return BadRequest();
 
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             try
             {
-                await _clientsService.EditAsync(dto);
+                await _clientsService.EditAsync(dto, CurrentAccess());
                 return NoContent();
             }
             catch (InvalidOperationException ex)
@@ -73,6 +78,9 @@ namespace PropertyManager.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             try
             {
                 await _clientsService.DeleteAsync(id);
@@ -87,6 +95,9 @@ namespace PropertyManager.API.Controllers
         [HttpPost("{id}/deactivate")]
         public async Task<IActionResult> Deactivate(int id)
         {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             try
             {
                 await _clientsService.DeactivateAsync(id);
@@ -115,6 +126,9 @@ namespace PropertyManager.API.Controllers
         [HttpGet("{id}/units")]
         public async Task<IActionResult> GetRentedUnits(int id)
         {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             var properties = await _clientsService.GetRentedUnitsAsync(id);
             return Ok(properties);
         }
@@ -122,6 +136,9 @@ namespace PropertyManager.API.Controllers
         [HttpPost("{id}/units/{unitId}")]
         public async Task<IActionResult> AddRentedUnit(int id, int unitId)
         {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             await _clientsService.AddRentedUnitAsync(id, unitId);
             return NoContent();
         }
@@ -129,6 +146,9 @@ namespace PropertyManager.API.Controllers
         [HttpDelete("{id}/units/{unitId}")]
         public async Task<IActionResult> RemoveRentedUnit(int id, int unitId)
         {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
             await _clientsService.RemoveRentedUnitAsync(id, unitId);
             return NoContent();
         }
@@ -136,6 +156,9 @@ namespace PropertyManager.API.Controllers
         [HttpGet("{clientId}/units/{unitId}/financial-records")]
         public async Task<IActionResult> GetFinancialRecords(int clientId, int unitId, [FromQuery] int? subtypeId)
         {
+            if (await _clientsService.GetByIdAsync(clientId, CurrentAccess()) == null)
+                return NotFound();
+
             var records = await _financialRecordsService.GetByClientAndUnitAsync(clientId, unitId, subtypeId);
             return Ok(records);
         }
@@ -143,6 +166,9 @@ namespace PropertyManager.API.Controllers
         [HttpGet("{clientId}/units/{unitId}/financial-records/{id}")]
         public async Task<IActionResult> GetFinancialRecord(int clientId, int unitId, int id)
         {
+            if (await _clientsService.GetByIdAsync(clientId, CurrentAccess()) == null)
+                return NotFound();
+
             var record = await _financialRecordsService.GetByIdAsync(clientId, unitId, id);
             if (record == null)
                 return NotFound();
@@ -159,8 +185,18 @@ namespace PropertyManager.API.Controllers
             if (unitId != dto.UnitId)
                 return BadRequest();
 
-            var id = await _financialRecordsService.CreateAsync(clientId, dto);
-            return CreatedAtAction(nameof(GetFinancialRecord), new { clientId, unitId, id }, id);
+            if (await _clientsService.GetByIdAsync(clientId, CurrentAccess()) == null)
+                return NotFound();
+
+            try
+            {
+                var id = await _financialRecordsService.CreateAsync(clientId, dto);
+                return CreatedAtAction(nameof(GetFinancialRecord), new { clientId, unitId, id }, id);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{clientId}/units/{unitId}/financial-records/{id}")]
@@ -173,15 +209,30 @@ namespace PropertyManager.API.Controllers
             if (unitId != dto.UnitId || id != dto.Id)
                 return BadRequest();
 
-            await _financialRecordsService.EditAsync(clientId, dto);
-            return NoContent();
+            if (await _clientsService.GetByIdAsync(clientId, CurrentAccess()) == null)
+                return NotFound();
+
+            try
+            {
+                await _financialRecordsService.EditAsync(clientId, dto);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{clientId}/units/{unitId}/financial-records/{id}")]
         public async Task<IActionResult> DeleteFinancialRecord(int clientId, int unitId, int id)
         {
+            if (await _clientsService.GetByIdAsync(clientId, CurrentAccess()) == null)
+                return NotFound();
+
             await _financialRecordsService.DeleteAsync(clientId, unitId, id);
             return NoContent();
         }
+
+        private IReadOnlyList<ClientRoleType> CurrentAccess() => ClientAccess.Resolve(User);
     }
 }

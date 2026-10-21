@@ -10,6 +10,7 @@ namespace PropertyManager.WEB.ViewModels.Clients
         public string ClientDisplayName { get; set; } = string.Empty;
         public ClientType ClientType { get; set; }
         public int? PropertyIdToAdd { get; set; }
+        public IReadOnlyList<ClientRoleBadgeViewModel> Roles { get; set; } = [];
         public IReadOnlyList<ClientRentedUnitDto> RentedUnits { get; set; } = Array.Empty<ClientRentedUnitDto>();
         public IReadOnlyList<PropertyListItemDto> AvailableProperties { get; set; } = Array.Empty<PropertyListItemDto>();
     }

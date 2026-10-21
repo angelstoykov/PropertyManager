@@ -15,6 +15,8 @@ namespace PropertyManager.Application.DTOs.UnitFinancialRecords
         public int CurrencyId { get; set; }
         public string? CurrencyCode { get; set; }
         public string? CurrencySymbol { get; set; }
+        public int? ContractorClientId { get; set; }
+        public string? ContractorName { get; set; }
         public string? Comment { get; set; }
     }
 }

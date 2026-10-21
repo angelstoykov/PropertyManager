@@ -305,6 +305,36 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("Clients");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.ClientRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId", "Role")
+                        .IsUnique();
+
+                    b.ToTable("ClientRoles");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.ClientUnit", b =>
                 {
                     b.Property<int>("ClientId")
@@ -570,6 +600,9 @@ namespace PropertyManager.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<int?>("ContractorClientId")
+                        .HasColumnType("int");
+
                     b.Property<int>("CurrencyId")
                         .HasColumnType("int");
 
@@ -586,6 +619,8 @@ namespace PropertyManager.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ContractorClientId");
 
                     b.HasIndex("CurrencyId");
 
@@ -680,6 +715,17 @@ namespace PropertyManager.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.ClientRole", b =>
+                {
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Client", "Client")
+                        .WithMany("Roles")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.ClientUnit", b =>
                 {
                     b.HasOne("PropertyManager.Domain.Models.Entities.Client", "Client")
@@ -734,6 +780,11 @@ namespace PropertyManager.Data.Migrations
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.UnitFinancialRecord", b =>
                 {
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Client", "ContractorClient")
+                        .WithMany("ContractorExpenses")
+                        .HasForeignKey("ContractorClientId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("PropertyManager.Domain.Models.Entities.Currency", "Currency")
                         .WithMany()
                         .HasForeignKey("CurrencyId")
@@ -751,6 +802,8 @@ namespace PropertyManager.Data.Migrations
                         .HasForeignKey("UnitId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ContractorClient");
 
                     b.Navigation("Currency");
 
@@ -789,6 +842,10 @@ namespace PropertyManager.Data.Migrations
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Client", b =>
                 {
                     b.Navigation("ClientUnits");
+
+                    b.Navigation("ContractorExpenses");
+
+                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.FinancialRecordSubtype", b =>
