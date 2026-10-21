@@ -14,12 +14,22 @@
 <form asp-action="AddFinancialRecord" method="post" class="row g-2 align-items-end mb-4">
     <input type="hidden" asp-for="FinancialRecord.ClientId" />
     <input type="hidden" asp-for="FinancialRecord.UnitId" />
+    <input type="hidden" asp-for="FinancialRecord.FilterSubtypeId" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="col-md-2">
         <label asp-for="FinancialRecord.Type" class="form-label"></label>
-        <select asp-for="FinancialRecord.Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()"></select>
+        <select asp-for="FinancialRecord.Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()" data-record-type></select>
         <span asp-validation-for="FinancialRecord.Type" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="FinancialRecord.SubtypeId" class="form-label"></label>
+        <select asp-for="FinancialRecord.SubtypeId" class="form-select" data-subtype-select
+                data-selected-id="@Model.FinancialRecord.SubtypeId"
+                data-preserved-id="">
+            <option value="">Select a subtype</option>
+        </select>
+        <span asp-validation-for="FinancialRecord.SubtypeId" class="text-danger"></span>
     </div>
     <div class="col-md-2">
         <label asp-for="FinancialRecord.Date" class="form-label"></label>
@@ -46,10 +56,38 @@
     </div>
 </form>
 
+<form asp-action="UnitFinancialRecords" method="get" class="row g-2 align-items-end mb-3">
+    <input type="hidden" name="clientId" value="@Model.ClientId" />
+    <input type="hidden" name="unitId" value="@Model.UnitId" />
+    <div class="col-md-4">
+        <label class="form-label" for="subtypeId">Subtype</label>
+        <select id="subtypeId" name="subtypeId" class="form-select" onchange="this.form.submit()">
+            <option value="">All subtypes</option>
+            <optgroup label="Income">
+                @foreach (var subtype in Model.FinancialRecord.SubtypeOptions.Where(option => option.Type == (int)FinancialRecordType.Income))
+                {
+                    <option value="@subtype.Id" selected="@(Model.SelectedSubtypeId == subtype.Id)">
+                        @(subtype.IsActive ? subtype.Name : subtype.Name + " (inactive)")
+                    </option>
+                }
+            </optgroup>
+            <optgroup label="Expense">
+                @foreach (var subtype in Model.FinancialRecord.SubtypeOptions.Where(option => option.Type == (int)FinancialRecordType.Expense))
+                {
+                    <option value="@subtype.Id" selected="@(Model.SelectedSubtypeId == subtype.Id)">
+                        @(subtype.IsActive ? subtype.Name : subtype.Name + " (inactive)")
+                    </option>
+                }
+            </optgroup>
+        </select>
+    </div>
+</form>
+
 <table class="table table-bordered table-hover">
     <thead>
         <tr>
             <th>Type</th>
+            <th>Subtype</th>
             <th>Date</th>
             <th>Amount</th>
             <th>Currency</th>
@@ -61,7 +99,7 @@
         @if (!Model.Records.Any())
         {
             <tr>
-                <td colspan="6" class="text-muted">No financial records yet.</td>
+                <td colspan="7" class="text-muted">@(Model.SelectedSubtypeId is > 0 ? "No financial records match this subtype." : "No financial records yet.")</td>
             </tr>
         }
         else
@@ -79,6 +117,7 @@
                             <span class="badge bg-danger">Expense</span>
                         }
                     </td>
+                    <td>@record.SubtypeName</td>
                     <td>@record.Date.ToString("yyyy-MM-dd")</td>
                     <td>@record.Amount.ToString("N2")</td>
                     <td>@(Model.CurrencySymbols.GetValueOrDefault(record.CurrencyId) ?? record.CurrencySymbol ?? record.CurrencyCode)</td>
@@ -88,11 +127,13 @@
                            asp-route-clientId="@Model.ClientId"
                            asp-route-unitId="@Model.UnitId"
                            asp-route-id="@record.Id"
+                           asp-route-subtypeId="@Model.SelectedSubtypeId"
                            class="btn btn-sm btn-warning">Edit</a>
                         <form asp-action="DeleteFinancialRecord" method="post" class="d-inline">
                             <input type="hidden" name="clientId" value="@Model.ClientId" />
                             <input type="hidden" name="unitId" value="@Model.UnitId" />
                             <input type="hidden" name="id" value="@record.Id" />
+                            <input type="hidden" name="subtypeId" value="@Model.SelectedSubtypeId" />
                             <button type="submit" class="btn btn-sm btn-danger"
                                     onclick="return confirm('Delete this record?');">Delete</button>
                         </form>
@@ -107,4 +148,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_FinancialRecordSubtypeScript" model="Model.FinancialRecord.SubtypeOptions" />
 }

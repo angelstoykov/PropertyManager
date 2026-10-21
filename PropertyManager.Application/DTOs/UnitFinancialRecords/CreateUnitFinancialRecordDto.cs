@@ -6,6 +6,7 @@ namespace PropertyManager.Application.DTOs.UnitFinancialRecords
     {
         public int UnitId { get; set; }
         public FinancialRecordType Type { get; set; }
+        public int SubtypeId { get; set; }
         public DateTime Date { get; set; }
         public decimal Amount { get; set; }
         public int CurrencyId { get; set; }

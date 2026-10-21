@@ -15,6 +15,13 @@ namespace PropertyManager.WEB.ViewModels.Clients
         [Display(Name = "Type")]
         public FinancialRecordType Type { get; set; } = FinancialRecordType.Income;
 
+        [Required(ErrorMessage = "Select a subtype.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Select a subtype.")]
+        [Display(Name = "Subtype")]
+        public int? SubtypeId { get; set; }
+
+        public int? FilterSubtypeId { get; set; }
+
         [Required]
         [Display(Name = "Date")]
         [DataType(DataType.Date)]
@@ -36,6 +43,8 @@ namespace PropertyManager.WEB.ViewModels.Clients
 
         public IReadOnlyList<SelectListItem> Currencies { get; set; } = Array.Empty<SelectListItem>();
 
+        public IReadOnlyList<FinancialRecordSubtypeOption> SubtypeOptions { get; set; } = Array.Empty<FinancialRecordSubtypeOption>();
+
         public async Task LoadActiveCurrenciesAsync(ICurrencyApiClient currencyApiClient)
         {
             var active = (await currencyApiClient.GetAllActiveAsync()).ToList();
@@ -50,6 +59,20 @@ namespace PropertyManager.WEB.ViewModels.Clients
 
             if (CurrencyId == 0 && active.Count > 0)
                 CurrencyId = active[0].Id;
+        }
+
+        public async Task LoadSubtypesAsync(IFinancialRecordSubtypesApiClient subtypesApiClient)
+        {
+            var subtypes = await subtypesApiClient.GetAllAsync();
+            SubtypeOptions = subtypes
+                .Select(subtype => new FinancialRecordSubtypeOption
+                {
+                    Id = subtype.Id,
+                    Type = (int)subtype.Type,
+                    Name = subtype.Name,
+                    IsActive = subtype.IsActive
+                })
+                .ToList();
         }
     }
 }

@@ -14,6 +14,9 @@ namespace PropertyManager.Domain.Models.Entities
 
         public FinancialRecordType Type { get; set; }
 
+        public int SubtypeId { get; set; }
+        public FinancialRecordSubtype Subtype { get; set; } = null!;
+
         public DateTime Date { get; set; }
 
         [Precision(18, 2)]

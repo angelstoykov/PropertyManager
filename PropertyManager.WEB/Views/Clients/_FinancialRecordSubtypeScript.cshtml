@@ -1,0 +1,83 @@
+@model IReadOnlyList<PropertyManager.WEB.ViewModels.Clients.FinancialRecordSubtypeOption>
+<script type="application/json" id="financial-record-subtypes">
+    @Json.Serialize(Model)
+</script>
+<script>
+    (function () {
+        const dataElement = document.getElementById("financial-record-subtypes");
+        if (!dataElement)
+            return;
+
+        const subtypes = JSON.parse(dataElement.textContent || "[]");
+
+        document.querySelectorAll("[data-record-type]").forEach(function (typeSelect) {
+            const form = typeSelect.form;
+            if (!form)
+                return;
+
+            const subtypeSelect = form.querySelector("[data-subtype-select]");
+            if (!subtypeSelect)
+                return;
+
+            function subtypeId(subtype) {
+                return subtype.id ?? subtype.Id;
+            }
+
+            function subtypeName(subtype) {
+                return subtype.name ?? subtype.Name;
+            }
+
+            function subtypeType(subtype) {
+                return subtype.type ?? subtype.Type;
+            }
+
+            function subtypeIsActive(subtype) {
+                const value = subtype.isActive ?? subtype.IsActive;
+                return value === true || value === "true";
+            }
+
+            function rebuild(resetSelection) {
+                const type = typeSelect.value;
+                const selected = resetSelection ? "" : (subtypeSelect.dataset.selectedId || "");
+                const preserved = resetSelection ? "" : (subtypeSelect.dataset.preservedId || "");
+
+                subtypeSelect.innerHTML = "";
+
+                const placeholder = document.createElement("option");
+                placeholder.value = "";
+                placeholder.textContent = "Select a subtype";
+                subtypeSelect.appendChild(placeholder);
+
+                subtypes.forEach(function (subtype) {
+                    if (String(subtypeType(subtype)) !== String(type))
+                        return;
+
+                    const id = String(subtypeId(subtype));
+                    const isPreserved = preserved !== "" && preserved !== "0" && id === String(preserved);
+                    if (!subtypeIsActive(subtype) && !isPreserved)
+                        return;
+
+                    const option = document.createElement("option");
+                    option.value = id;
+                    option.textContent = subtypeIsActive(subtype)
+                        ? subtypeName(subtype)
+                        : subtypeName(subtype) + " (inactive)";
+                    if (selected !== "" && selected !== "0" && id === String(selected))
+                        option.selected = true;
+                    subtypeSelect.appendChild(option);
+                });
+
+                if (resetSelection)
+                    subtypeSelect.value = "";
+            }
+
+            typeSelect.addEventListener("change", function () {
+                subtypeSelect.dataset.selectedId = "";
+                subtypeSelect.dataset.preservedId = "";
+                rebuild(true);
+            });
+
+            rebuild(false);
+        });
+    })();
+</script>

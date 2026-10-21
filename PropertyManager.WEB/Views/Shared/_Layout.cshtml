@@ -28,6 +28,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="PriceComponents" asp-action="Index">Price Components</a>
                         </li>
+                        @if (User.IsInRole(PropertyManager.Domain.Constants.Roles.Admin))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="FinancialRecordSubtypes" asp-action="Index">Record Subtypes</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>

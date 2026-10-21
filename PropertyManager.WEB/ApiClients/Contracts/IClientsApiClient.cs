@@ -16,7 +16,7 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId);
         Task AddRentedUnitAsync(int clientId, int unitId);
         Task RemoveRentedUnitAsync(int clientId, int unitId);
-        Task<IReadOnlyList<UnitFinancialRecordDto>> GetFinancialRecordsAsync(int clientId, int unitId);
+        Task<IReadOnlyList<UnitFinancialRecordDto>> GetFinancialRecordsAsync(int clientId, int unitId, int? subtypeId = null);
         Task<UnitFinancialRecordDto?> GetFinancialRecordByIdAsync(int clientId, int unitId, int id);
         Task CreateFinancialRecordAsync(int clientId, CreateUnitFinancialRecordDto dto);
         Task<HttpResponseMessage> UpdateFinancialRecordAsync(int clientId, int unitId, EditUnitFinancialRecordDto dto);

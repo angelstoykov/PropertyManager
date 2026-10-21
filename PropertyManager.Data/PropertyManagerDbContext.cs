@@ -172,8 +172,22 @@ namespace PropertyManager.Data
                     .HasForeignKey(r => r.CurrencyId)
                     .OnDelete(DeleteBehavior.Restrict);
 
+                entity.HasOne(r => r.Subtype)
+                    .WithMany(s => s.FinancialRecords)
+                    .HasForeignKey(r => r.SubtypeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
                 entity.HasIndex(r => new { r.UnitId, r.Date });
                 entity.HasIndex(r => r.CurrencyId);
+                entity.HasIndex(r => r.SubtypeId);
+            });
+
+            modelBuilder.Entity<FinancialRecordSubtype>(entity =>
+            {
+                entity.Property(s => s.Name).IsRequired().HasMaxLength(100);
+                entity.Property(s => s.Type).HasConversion<int>();
+                entity.Property(s => s.IsActive).IsRequired();
+                entity.HasIndex(s => new { s.Type, s.Name }).IsUnique();
             });
 
             modelBuilder.Entity<PriceComponent>(entity =>
@@ -230,6 +244,7 @@ namespace PropertyManager.Data
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
+        public DbSet<FinancialRecordSubtype> FinancialRecordSubtypes => Set<FinancialRecordSubtype>();
         public DbSet<Currency> Currencies => Set<Currency>();
         public DbSet<PriceComponent> PriceComponents => Set<PriceComponent>();
         public DbSet<UnitPriceComponent> UnitPriceComponents => Set<UnitPriceComponent>();

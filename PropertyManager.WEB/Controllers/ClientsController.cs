@@ -11,12 +11,15 @@ namespace PropertyManager.WEB.Controllers
     {
         private readonly IClientsApiClient _clientsApiClient;
         private readonly ICurrencyApiClient _currencyApiClient;
+        private readonly IFinancialRecordSubtypesApiClient _subtypesApiClient;
 
         public ClientsController(IClientsApiClient clientsApiClient,
-                                 ICurrencyApiClient currencyApiClient)
+                                 ICurrencyApiClient currencyApiClient,
+                                 IFinancialRecordSubtypesApiClient subtypesApiClient)
         {
             _clientsApiClient = clientsApiClient;
             _currencyApiClient = currencyApiClient;
+            _subtypesApiClient = subtypesApiClient;
         }
 
         public async Task<IActionResult> Index(string? search)
@@ -166,7 +169,7 @@ namespace PropertyManager.WEB.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId)
+        public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId, int? subtypeId)
         {
             var client = await _clientsApiClient.GetByIdAsync(clientId);
             if (client == null)
@@ -177,7 +180,7 @@ namespace PropertyManager.WEB.Controllers
             if (unit == null)
                 return NotFound();
 
-            var records = await _clientsApiClient.GetFinancialRecordsAsync(clientId, unitId);
+            var records = await _clientsApiClient.GetFinancialRecordsAsync(clientId, unitId, subtypeId);
 
             var model = new UnitFinancialRecordsViewModel
             {
@@ -187,15 +190,17 @@ namespace PropertyManager.WEB.Controllers
                 UnitName = unit.Name,
                 UnitAddress = unit.Address,
                 UnitNumber = unit.UnitNumber,
+                SelectedSubtypeId = subtypeId,
                 FinancialRecord = new UnitFinancialRecordFormViewModel
                 {
                     ClientId = clientId,
                     UnitId = unitId,
-                    Date = DateTime.Today
+                    Date = DateTime.Today,
+                    FilterSubtypeId = subtypeId
                 },
                 Records = records
             };
-            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+            await model.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient);
             return View(model);
         }
 
@@ -211,6 +216,7 @@ namespace PropertyManager.WEB.Controllers
             {
                 UnitId = record.UnitId,
                 Type = record.Type,
+                SubtypeId = record.SubtypeId ?? 0,
                 Date = record.Date,
                 Amount = record.Amount,
                 CurrencyId = record.CurrencyId,
@@ -227,11 +233,16 @@ namespace PropertyManager.WEB.Controllers
                 return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
             }
 
-            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId = record.ClientId, unitId = record.UnitId });
+            return RedirectToAction(nameof(UnitFinancialRecords), new
+            {
+                clientId = record.ClientId,
+                unitId = record.UnitId,
+                subtypeId = record.FilterSubtypeId
+            });
         }
 
         [HttpGet]
-        public async Task<IActionResult> EditFinancialRecord(int clientId, int unitId, int id)
+        public async Task<IActionResult> EditFinancialRecord(int clientId, int unitId, int id, int? subtypeId)
         {
             var record = await _clientsApiClient.GetFinancialRecordByIdAsync(clientId, unitId, id);
             if (record == null)
@@ -243,13 +254,16 @@ namespace PropertyManager.WEB.Controllers
                 ClientId = clientId,
                 UnitId = unitId,
                 Type = record.Type,
+                SubtypeId = record.SubtypeId,
                 Date = record.Date,
                 Amount = record.Amount,
                 CurrencyId = record.CurrencyId,
-                Comment = record.Comment
+                Comment = record.Comment,
+                FilterSubtypeId = subtypeId
             };
 
             await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+            await model.LoadSubtypesAsync(_subtypesApiClient);
 
             return View(model);
         }
@@ -259,7 +273,7 @@ namespace PropertyManager.WEB.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+                await LoadFinancialRecordLookupsAsync(model);
                 return View(model);
             }
 
@@ -268,6 +282,7 @@ namespace PropertyManager.WEB.Controllers
                 Id = model.Id,
                 UnitId = model.UnitId,
                 Type = model.Type,
+                SubtypeId = model.SubtypeId ?? 0,
                 Date = model.Date,
                 Amount = model.Amount,
                 CurrencyId = model.CurrencyId,
@@ -280,22 +295,27 @@ namespace PropertyManager.WEB.Controllers
                 if (!response.IsSuccessStatusCode)
                 {
                     ModelState.AddModelError("", "Error updating financial record.");
-                    await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+                    await LoadFinancialRecordLookupsAsync(model);
                     return View(model);
                 }
             }
             catch
             {
                 ModelState.AddModelError("", "Error updating financial record.");
-                await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+                await LoadFinancialRecordLookupsAsync(model);
                 return View(model);
             }
 
-            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId = model.ClientId, unitId = model.UnitId });
+            return RedirectToAction(nameof(UnitFinancialRecords), new
+            {
+                clientId = model.ClientId,
+                unitId = model.UnitId,
+                subtypeId = model.FilterSubtypeId
+            });
         }
 
         [HttpPost]
-        public async Task<IActionResult> DeleteFinancialRecord(int clientId, int unitId, int id)
+        public async Task<IActionResult> DeleteFinancialRecord(int clientId, int unitId, int id, int? subtypeId)
         {
             try
             {
@@ -303,10 +323,16 @@ namespace PropertyManager.WEB.Controllers
             }
             catch
             {
-                return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId });
+                return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId, subtypeId });
             }
 
-            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId });
+            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId, subtypeId });
+        }
+
+        private async Task LoadFinancialRecordLookupsAsync(UnitFinancialRecordFormViewModel model)
+        {
+            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
+            await model.LoadSubtypesAsync(_subtypesApiClient);
         }
 
         private async Task<UnitFinancialRecordsViewModel> RebuildFinancialRecordsViewModelAsync(UnitFinancialRecordFormViewModel model)
@@ -314,7 +340,8 @@ namespace PropertyManager.WEB.Controllers
             var client = await _clientsApiClient.GetByIdAsync(model.ClientId);
             var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(model.ClientId);
             var unit = rentedUnits.First(u => u.UnitId == model.UnitId);
-            var records = await _clientsApiClient.GetFinancialRecordsAsync(model.ClientId, model.UnitId);
+            var records = await _clientsApiClient.GetFinancialRecordsAsync(
+                model.ClientId, model.UnitId, model.FilterSubtypeId);
 
             var vm = new UnitFinancialRecordsViewModel
             {
@@ -323,10 +350,11 @@ namespace PropertyManager.WEB.Controllers
                 UnitId = model.UnitId,
                 UnitName = unit.Name,
                 UnitAddress = unit.Address,
+                SelectedSubtypeId = model.FilterSubtypeId,
                 FinancialRecord = model,
                 Records = records
             };
-            await vm.LoadActiveCurrenciesAsync(_currencyApiClient);
+            await vm.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient);
             return vm;
         }
 

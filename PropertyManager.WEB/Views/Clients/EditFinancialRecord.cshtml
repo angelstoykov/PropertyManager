@@ -9,12 +9,23 @@
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="ClientId" />
     <input type="hidden" asp-for="UnitId" />
+    <input type="hidden" asp-for="FilterSubtypeId" />
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="mb-3">
         <label asp-for="Type" class="form-label"></label>
-        <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()"></select>
+        <select asp-for="Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()" data-record-type></select>
         <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SubtypeId" class="form-label"></label>
+        <select asp-for="SubtypeId" class="form-select" data-subtype-select
+                data-selected-id="@Model.SubtypeId"
+                data-preserved-id="@(Model.Id > 0 && Model.SubtypeId > 0 ? Model.SubtypeId.ToString() : "")">
+            <option value="">Select a subtype</option>
+        </select>
+        <span asp-validation-for="SubtypeId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
@@ -45,9 +56,11 @@
     <a asp-action="UnitFinancialRecords"
        asp-route-clientId="@Model.ClientId"
        asp-route-unitId="@Model.UnitId"
+       asp-route-subtypeId="@Model.FilterSubtypeId"
        class="btn btn-secondary">Cancel</a>
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <partial name="_FinancialRecordSubtypeScript" model="Model.SubtypeOptions" />
 }

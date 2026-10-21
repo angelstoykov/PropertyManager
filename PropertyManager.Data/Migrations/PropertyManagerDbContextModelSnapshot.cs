@@ -17,7 +17,7 @@ namespace PropertyManager.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -327,6 +327,36 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("Currencies");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.FinancialRecordSubtype", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Type", "Name")
+                        .IsUnique();
+
+                    b.ToTable("FinancialRecordSubtypes");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>
                 {
                     b.Property<int>("Id")
@@ -557,6 +587,9 @@ namespace PropertyManager.Data.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("SubtypeId")
+                        .HasColumnType("int");
+
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
@@ -566,6 +599,8 @@ namespace PropertyManager.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CurrencyId");
+
+                    b.HasIndex("SubtypeId");
 
                     b.HasIndex("UnitId", "Date");
 
@@ -724,6 +759,12 @@ namespace PropertyManager.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("PropertyManager.Domain.Models.Entities.FinancialRecordSubtype", "Subtype")
+                        .WithMany("FinancialRecords")
+                        .HasForeignKey("SubtypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
                         .WithMany("FinancialRecords")
                         .HasForeignKey("UnitId")
@@ -731,6 +772,8 @@ namespace PropertyManager.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Currency");
+
+                    b.Navigation("Subtype");
 
                     b.Navigation("Unit");
                 });
@@ -765,6 +808,11 @@ namespace PropertyManager.Data.Migrations
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Client", b =>
                 {
                     b.Navigation("ClientUnits");
+                });
+
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.FinancialRecordSubtype", b =>
+                {
+                    b.Navigation("FinancialRecords");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>

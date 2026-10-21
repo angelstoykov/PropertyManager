@@ -3,6 +3,7 @@ using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.Application.Services.Contracts;
 using PropertyManager.Data;
 using PropertyManager.Domain.Models.Entities;
+using PropertyManager.Domain.Models.Enums;
 
 namespace PropertyManager.Application.Services
 {
@@ -15,13 +16,18 @@ namespace PropertyManager.Application.Services
             _context = context;
         }
 
-        public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetByClientAndUnitAsync(int clientId, int unitId)
+        public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetByClientAndUnitAsync(int clientId, int unitId, int? subtypeId = null)
         {
             await EnsureClientHasUnitAsync(clientId, unitId);
 
-            return await _context.UnitFinancialRecords
+            var query = _context.UnitFinancialRecords
                 .AsNoTracking()
-                .Where(r => r.UnitId == unitId)
+                .Where(r => r.UnitId == unitId);
+
+            if (subtypeId is > 0)
+                query = query.Where(r => r.SubtypeId == subtypeId.Value);
+
+            return await query
                 .OrderByDescending(r => r.Date)
                 .ThenByDescending(r => r.Id)
                 .Select(r => new UnitFinancialRecordDto
@@ -29,6 +35,9 @@ namespace PropertyManager.Application.Services
                     Id = r.Id,
                     UnitId = r.UnitId,
                     Type = r.Type,
+                    SubtypeId = r.SubtypeId,
+                    SubtypeName = r.Subtype.Name,
+                    SubtypeIsActive = r.Subtype.IsActive,
                     Date = r.Date,
                     Amount = r.Amount,
                     CurrencyId = r.CurrencyId,
@@ -46,6 +55,7 @@ namespace PropertyManager.Application.Services
             var record = await _context.UnitFinancialRecords
                 .AsNoTracking()
                 .Include(r => r.Currency)
+                .Include(r => r.Subtype)
                 .FirstOrDefaultAsync(r => r.Id == id && r.UnitId == unitId);
 
             return record == null ? null : MapToDto(record);
@@ -55,11 +65,13 @@ namespace PropertyManager.Application.Services
         {
             await EnsureClientHasUnitAsync(clientId, dto.UnitId);
             await ValidateRecordFieldsAsync(dto.Amount, dto.CurrencyId, requireActive: true);
+            await ValidateSubtypeAsync(dto.Type, dto.SubtypeId, requireActive: true);
 
             var record = new UnitFinancialRecord
             {
                 UnitId = dto.UnitId,
                 Type = dto.Type,
+                SubtypeId = dto.SubtypeId,
                 Date = dto.Date.Date,
                 Amount = dto.Amount,
                 CurrencyId = dto.CurrencyId,
@@ -82,10 +94,14 @@ namespace PropertyManager.Application.Services
             if (record == null)
                 throw new InvalidOperationException("Financial record not found.");
 
-            var requireActive = record.CurrencyId != dto.CurrencyId;
-            await ValidateRecordFieldsAsync(dto.Amount, dto.CurrencyId, requireActive);
+            var requireActiveCurrency = record.CurrencyId != dto.CurrencyId;
+            await ValidateRecordFieldsAsync(dto.Amount, dto.CurrencyId, requireActiveCurrency);
+
+            var requireActiveSubtype = record.SubtypeId != dto.SubtypeId;
+            await ValidateSubtypeAsync(dto.Type, dto.SubtypeId, requireActiveSubtype);
 
             record.Type = dto.Type;
+            record.SubtypeId = dto.SubtypeId;
             record.Date = dto.Date.Date;
             record.Amount = dto.Amount;
             record.CurrencyId = dto.CurrencyId;
@@ -134,11 +150,31 @@ namespace PropertyManager.Application.Services
                 throw new InvalidOperationException("Currency is not valid.");
         }
 
+        private async Task ValidateSubtypeAsync(FinancialRecordType type, int subtypeId, bool requireActive)
+        {
+            if (subtypeId <= 0)
+                throw new InvalidOperationException("Subtype is required.");
+
+            var subtypeQuery = _context.FinancialRecordSubtypes
+                .AsNoTracking()
+                .Where(s => s.Id == subtypeId && s.Type == type);
+
+            if (requireActive)
+                subtypeQuery = subtypeQuery.Where(s => s.IsActive);
+
+            var exists = await subtypeQuery.AnyAsync();
+            if (!exists)
+                throw new InvalidOperationException("Subtype is not valid for this type.");
+        }
+
         private static UnitFinancialRecordDto MapToDto(UnitFinancialRecord record) => new()
         {
             Id = record.Id,
             UnitId = record.UnitId,
             Type = record.Type,
+            SubtypeId = record.SubtypeId,
+            SubtypeName = record.Subtype.Name,
+            SubtypeIsActive = record.Subtype.IsActive,
             Date = record.Date,
             Amount = record.Amount,
             CurrencyId = record.CurrencyId,

@@ -1,0 +1,80 @@
+@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.FinancialRecordSubtypes
+@model FinancialRecordSubtypeIndexViewModel
+
+<h2>Record Subtypes</h2>
+
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
+<h4 class="mt-4">Add subtype</h4>
+<form asp-action="Create" method="post" class="row g-2 align-items-end mb-4">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-3">
+        <label asp-for="Form.Type" class="form-label"></label>
+        <select asp-for="Form.Type" class="form-select" asp-items="Html.GetEnumSelectList<FinancialRecordType>()"></select>
+        <span asp-validation-for="Form.Type" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Form.Name" class="form-label"></label>
+        <input asp-for="Form.Name" class="form-control" />
+        <span asp-validation-for="Form.Name" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+</form>
+
+<table class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th>Type</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Subtypes.Any())
+        {
+            <tr>
+                <td colspan="4" class="text-muted">No subtypes yet.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var subtype in Model.Subtypes)
+            {
+                <tr>
+                    <td>@subtype.Type</td>
+                    <td>@subtype.Name</td>
+                    <td>
+                        @if (subtype.IsActive)
+                        {
+                            <span class="badge bg-primary">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Inactive</span>
+                        }
+                    </td>
+                    <td class="text-nowrap">
+                        <a asp-action="Edit" asp-route-id="@subtype.Id" class="btn btn-sm btn-warning">Edit</a>
+                        <form asp-action="Delete" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@subtype.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Delete this subtype?');">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

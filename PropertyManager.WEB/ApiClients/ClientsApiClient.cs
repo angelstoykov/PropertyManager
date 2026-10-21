@@ -84,10 +84,13 @@ namespace PropertyManager.WEB.ApiClients
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetFinancialRecordsAsync(int clientId, int unitId)
+        public async Task<IReadOnlyList<UnitFinancialRecordDto>> GetFinancialRecordsAsync(int clientId, int unitId, int? subtypeId = null)
         {
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<UnitFinancialRecordDto>>(
-                $"{api}/{clientId}/units/{unitId}/financial-records");
+            var url = $"{api}/{clientId}/units/{unitId}/financial-records";
+            if (subtypeId is > 0)
+                url += $"?subtypeId={subtypeId.Value}";
+
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<UnitFinancialRecordDto>>(url);
             return result ?? Array.Empty<UnitFinancialRecordDto>();
         }
 

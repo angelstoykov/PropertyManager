@@ -99,9 +99,9 @@ namespace PropertyManager.API.Controllers
         }
 
         [HttpGet("{clientId}/units/{unitId}/financial-records")]
-        public async Task<IActionResult> GetFinancialRecords(int clientId, int unitId)
+        public async Task<IActionResult> GetFinancialRecords(int clientId, int unitId, [FromQuery] int? subtypeId)
         {
-            var records = await _financialRecordsService.GetByClientAndUnitAsync(clientId, unitId);
+            var records = await _financialRecordsService.GetByClientAndUnitAsync(clientId, unitId, subtypeId);
             return Ok(records);
         }
 
