@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using PropertyManager.Application.Configuration;
@@ -12,6 +13,10 @@ namespace PropertyManager.Application.Services
 {
     public class ClientsService : IClientsService
     {
+        private static readonly Regex IbanPattern = new(
+            "^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$",
+            RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
         private readonly PropertyManagerDbContext _context;
         private readonly HashSet<ClientSearchField> _searchFields;
 
@@ -25,7 +30,8 @@ namespace PropertyManager.Application.Services
         {
             var clients = await _context.Clients
                 .AsNoTracking()
-                .OrderBy(c => c.ClientType)
+                .OrderByDescending(c => c.IsActive)
+                .ThenBy(c => c.ClientType)
                 .ThenBy(c => c.CompanyName)
                 .ThenBy(c => c.LastName)
                 .ThenBy(c => c.FirstName)
@@ -33,11 +39,13 @@ namespace PropertyManager.Application.Services
                 {
                     Id = c.Id,
                     ClientType = c.ClientType,
-                    DisplayName = c.ClientType == ClientType.LegalEntity
+                    DisplayName = c.ClientType == ClientType.Company
                         ? c.CompanyName!
                         : c.FirstName + " " + c.LastName,
                     Email = c.Email,
-                    Phone = c.Phone
+                    Phone = c.Phone,
+                    IsActive = c.IsActive,
+                    HasLinkedRecords = c.ClientUnits.Any()
                 })
                 .ToListAsync();
 
@@ -52,6 +60,7 @@ namespace PropertyManager.Application.Services
         {
             var client = await _context.Clients
                 .AsNoTracking()
+                .Include(c => c.ClientUnits)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (client == null)
@@ -62,21 +71,11 @@ namespace PropertyManager.Application.Services
 
         public async Task<int> CreateAsync(CreateClientDto dto)
         {
-            ValidateClientFields(dto.ClientType, dto.FirstName, dto.LastName, dto.CompanyName, dto.CompanyNumber);
-
-            var client = new Client
-            {
-                ClientType = dto.ClientType,
-                Email = dto.Email,
-                Phone = dto.Phone,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                PersonalId = dto.PersonalId,
-                CompanyName = dto.CompanyName,
-                CompanyNumber = dto.CompanyNumber,
-                VatNumber = dto.VatNumber,
-                LegalRepresentative = dto.LegalRepresentative
-            };
+            var client = new Client { IsActive = true };
+            ApplyClient(client, dto.ClientType, dto.Email, dto.Phone, dto.FirstName, dto.LastName,
+                dto.PersonalId, dto.DateOfBirth, dto.CompanyName, dto.CompanyNumber, dto.VatNumber,
+                dto.LegalRepresentative, dto.Address, dto.BankAccount, dto.Notes);
+            await EnsureIdentifierIsUniqueAsync(null, client.PersonalId, client.CompanyNumber);
 
             _context.Clients.Add(client);
             await _context.SaveChangesAsync();
@@ -86,33 +85,43 @@ namespace PropertyManager.Application.Services
 
         public async Task EditAsync(EditClientDto dto)
         {
-            ValidateClientFields(dto.ClientType, dto.FirstName, dto.LastName, dto.CompanyName, dto.CompanyNumber);
-
             var client = await _context.Clients.FindAsync(dto.Id);
             if (client == null)
                 throw new InvalidOperationException("Client not found.");
 
-            client.ClientType = dto.ClientType;
-            client.Email = dto.Email;
-            client.Phone = dto.Phone;
-            client.FirstName = dto.FirstName;
-            client.LastName = dto.LastName;
-            client.PersonalId = dto.PersonalId;
-            client.CompanyName = dto.CompanyName;
-            client.CompanyNumber = dto.CompanyNumber;
-            client.VatNumber = dto.VatNumber;
-            client.LegalRepresentative = dto.LegalRepresentative;
+            ApplyClient(client, dto.ClientType, dto.Email, dto.Phone, dto.FirstName, dto.LastName,
+                dto.PersonalId, dto.DateOfBirth, dto.CompanyName, dto.CompanyNumber, dto.VatNumber,
+                dto.LegalRepresentative, dto.Address, dto.BankAccount, dto.Notes);
+            client.IsActive = dto.IsActive;
+            await EnsureIdentifierIsUniqueAsync(client.Id, client.PersonalId, client.CompanyNumber);
 
             await _context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _context.Clients
+                .Include(c => c.ClientUnits)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (client == null)
                 return;
 
+            if (client.ClientUnits.Count > 0)
+                throw new InvalidOperationException(
+                    "This client is linked to records and can only be deactivated.");
+
             _context.Clients.Remove(client);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeactivateAsync(int id)
+        {
+            var client = await _context.Clients.FindAsync(id);
+            if (client == null)
+                throw new InvalidOperationException("Client not found.");
+
+            client.IsActive = false;
             await _context.SaveChangesAsync();
         }
 
@@ -248,27 +257,117 @@ namespace PropertyManager.Application.Services
             return false;
         }
 
-        private static void ValidateClientFields(
+        private static void ApplyClient(
+            Client client,
             ClientType clientType,
+            string email,
+            string phone,
             string? firstName,
             string? lastName,
+            string? personalId,
+            DateTime? dateOfBirth,
             string? companyName,
-            string? companyNumber)
+            string? companyNumber,
+            string? vatNumber,
+            string? legalRepresentative,
+            string? address,
+            string? bankAccount,
+            string? notes)
         {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new InvalidOperationException("Email is required.");
+            if (string.IsNullOrWhiteSpace(phone))
+                throw new InvalidOperationException("Phone is required.");
+
+            var iban = NormalizeIban(bankAccount);
+            if (iban != null && !IbanPattern.IsMatch(iban))
+                throw new InvalidOperationException("Bank account must be a valid IBAN.");
+
+            client.ClientType = clientType;
+            client.Email = email.Trim();
+            client.Phone = phone.Trim();
+            client.Address = Normalize(address);
+            client.BankAccount = iban;
+            client.Notes = Normalize(notes);
+
             if (clientType == ClientType.Individual)
             {
-                if (string.IsNullOrWhiteSpace(firstName))
+                client.FirstName = Normalize(firstName);
+                client.LastName = Normalize(lastName);
+                client.PersonalId = Normalize(personalId);
+                client.DateOfBirth = dateOfBirth?.Date;
+
+                if (client.FirstName == null)
                     throw new InvalidOperationException("First name is required for individual clients.");
-                if (string.IsNullOrWhiteSpace(lastName))
+                if (client.LastName == null)
                     throw new InvalidOperationException("Last name is required for individual clients.");
+                if (client.PersonalId == null)
+                    throw new InvalidOperationException("Personal ID is required for individual clients.");
+                if (client.DateOfBirth > DateTime.Today)
+                    throw new InvalidOperationException("Date of birth cannot be in the future.");
+
+                client.CompanyName = null;
+                client.CompanyNumber = null;
+                client.VatNumber = null;
+                client.LegalRepresentative = null;
             }
-            else if (clientType == ClientType.LegalEntity)
+            else if (clientType == ClientType.Company)
             {
-                if (string.IsNullOrWhiteSpace(companyName))
-                    throw new InvalidOperationException("Company name is required for legal entity clients.");
-                if (string.IsNullOrWhiteSpace(companyNumber))
-                    throw new InvalidOperationException("Company number is required for legal entity clients.");
+                client.CompanyName = Normalize(companyName);
+                client.CompanyNumber = Normalize(companyNumber);
+                client.VatNumber = Normalize(vatNumber);
+                client.LegalRepresentative = Normalize(legalRepresentative);
+
+                if (client.CompanyName == null)
+                    throw new InvalidOperationException("Company name is required for company clients.");
+                if (client.CompanyNumber == null)
+                    throw new InvalidOperationException("Company ID is required for company clients.");
+                if (client.LegalRepresentative == null)
+                    throw new InvalidOperationException("Legal representative is required for company clients.");
+
+                client.FirstName = null;
+                client.LastName = null;
+                client.PersonalId = null;
+                client.DateOfBirth = null;
             }
+            else
+            {
+                throw new InvalidOperationException("Client type is required.");
+            }
+        }
+
+        private async Task EnsureIdentifierIsUniqueAsync(int? clientId, string? personalId, string? companyNumber)
+        {
+            if (personalId != null)
+            {
+                var personalIdTaken = await _context.Clients.AnyAsync(c =>
+                    (clientId == null || c.Id != clientId) &&
+                    (c.PersonalId == personalId || c.CompanyNumber == personalId));
+
+                if (personalIdTaken)
+                    throw new InvalidOperationException("This personal ID is already used by another client.");
+            }
+
+            if (companyNumber != null)
+            {
+                var companyIdTaken = await _context.Clients.AnyAsync(c =>
+                    (clientId == null || c.Id != clientId) &&
+                    (c.CompanyNumber == companyNumber || c.PersonalId == companyNumber));
+
+                if (companyIdTaken)
+                    throw new InvalidOperationException("This company ID is already used by another client.");
+            }
+        }
+
+        private static string? Normalize(string? value) =>
+            string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        private static string? NormalizeIban(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            return value.Replace(" ", "", StringComparison.Ordinal).ToUpperInvariant();
         }
 
         private static ClientDto MapToDto(Client client) => new()
@@ -280,10 +379,16 @@ namespace PropertyManager.Application.Services
             FirstName = client.FirstName,
             LastName = client.LastName,
             PersonalId = client.PersonalId,
+            DateOfBirth = client.DateOfBirth,
             CompanyName = client.CompanyName,
             CompanyNumber = client.CompanyNumber,
             VatNumber = client.VatNumber,
-            LegalRepresentative = client.LegalRepresentative
+            LegalRepresentative = client.LegalRepresentative,
+            Address = client.Address,
+            BankAccount = client.BankAccount,
+            Notes = client.Notes,
+            IsActive = client.IsActive,
+            HasLinkedRecords = client.ClientUnits.Count > 0
         };
     }
 }

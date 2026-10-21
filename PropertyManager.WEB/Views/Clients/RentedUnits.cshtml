@@ -7,7 +7,7 @@
 
 <div class="mb-3">
     <strong>Client:</strong> @Model.ClientDisplayName
-    <span class="ms-2 badge bg-secondary">@(Model.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</span>
+    <span class="ms-2 badge bg-secondary">@(Model.ClientType == ClientType.Individual ? "Individual" : "Company")</span>
 </div>
 
 <form asp-action="AddRentedUnit" method="post" class="row g-2 align-items-end mb-4" id="addRentedUnitForm">

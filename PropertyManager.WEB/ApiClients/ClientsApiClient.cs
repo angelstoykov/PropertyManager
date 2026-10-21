@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Properties;
@@ -39,19 +41,60 @@ namespace PropertyManager.WEB.ApiClients
         public async Task CreateAsync(CreateClientDto dto)
         {
             var response = await _httpClient.PostAsJsonAsync(api, dto);
-            response.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(response);
         }
 
         public async Task<HttpResponseMessage> UpdateAsync(EditClientDto dto)
         {
             var response = await _httpClient.PutAsJsonAsync($"{api}/{dto.Id}", dto);
-            return response.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(response);
+            return response;
         }
 
         public async Task DeleteAsync(int id)
         {
             var response = await _httpClient.DeleteAsync($"{api}/{id}");
-            response.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(response);
+        }
+
+        public async Task DeactivateAsync(int id)
+        {
+            var response = await _httpClient.PostAsync($"{api}/{id}/deactivate", content: null);
+            await EnsureSuccessAsync(response);
+        }
+
+        private static async Task EnsureSuccessAsync(HttpResponseMessage response)
+        {
+            if (response.IsSuccessStatusCode)
+                return;
+
+            var body = await response.Content.ReadAsStringAsync();
+            var message = ReadErrorMessage(body);
+            if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict)
+                throw new InvalidOperationException(message);
+
+            throw new HttpRequestException(message);
+        }
+
+        private static string ReadErrorMessage(string body)
+        {
+            if (string.IsNullOrWhiteSpace(body))
+                return "Request failed.";
+
+            try
+            {
+                using var document = JsonDocument.Parse(body);
+                if (document.RootElement.TryGetProperty("message", out var message) &&
+                    message.ValueKind == JsonValueKind.String)
+                {
+                    return message.GetString() ?? "Request failed.";
+                }
+            }
+            catch (JsonException)
+            {
+            }
+
+            return "Request failed.";
         }
 
         public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)

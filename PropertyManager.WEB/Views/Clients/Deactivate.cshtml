@@ -1,0 +1,21 @@
+@using PropertyManager.Domain.Models.Enums
+@using PropertyManager.WEB.ViewModels.Clients
+
+@model DeleteClientViewModel
+
+<h2>Deactivate Client</h2>
+
+<div class="card">
+    <div class="card-body">
+        <p><strong>Name:</strong> @Model.DisplayName</p>
+        <p><strong>Type:</strong> @(Model.ClientType == ClientType.Individual ? "Individual" : "Company")</p>
+        <p class="mt-3">This client is linked to records and cannot be deleted. Deactivating keeps those records and marks the client inactive.</p>
+    </div>
+    <div class="card-footer">
+        <form asp-action="DeactivateConfirmed" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-warning">Deactivate</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>

@@ -27,6 +27,7 @@
             <th>Type</th>
             <th>Email</th>
             <th>Phone</th>
+            <th>Status</th>
             <th></th>
         </tr>
     </thead>
@@ -34,7 +35,7 @@
         @if (Model.Clients.Count == 0)
         {
             <tr>
-                <td colspan="5" class="text-muted">
+                <td colspan="6" class="text-muted">
                     @(string.IsNullOrWhiteSpace(Model.Search)
                         ? "No clients."
                         : "No clients match your search.")
@@ -47,13 +48,24 @@
             {
                 <tr>
                     <td>@client.DisplayName</td>
-                    <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Legal entity")</td>
+                    <td>@(client.ClientType == ClientType.Individual ? "Individual" : "Company")</td>
                     <td>@client.Email</td>
                     <td>@client.Phone</td>
+                    <td>@(client.IsActive ? "Active" : "Inactive")</td>
                     <td>
                         <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
                         <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
-                        <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                        @if (client.HasLinkedRecords)
+                        {
+                            @if (client.IsActive)
+                            {
+                                <a asp-action="Deactivate" asp-route-id="@client.Id" class="btn btn-sm btn-outline-danger">Deactivate</a>
+                            }
+                        }
+                        else
+                        {
+                            <a asp-action="Delete" asp-route-id="@client.Id" class="btn btn-sm btn-danger">Delete</a>
+                        }
                     </td>
                 </tr>
             }

@@ -96,13 +96,26 @@ namespace PropertyManager.Data
                 entity.Property(c => c.Phone).IsRequired().HasMaxLength(50);
                 entity.Property(c => c.FirstName).HasMaxLength(100);
                 entity.Property(c => c.LastName).HasMaxLength(100);
-                entity.Property(c => c.PersonalId).HasMaxLength(20);
+                entity.Property(c => c.PersonalId).HasMaxLength(50);
+                entity.Property(c => c.DateOfBirth).HasColumnType("date");
                 entity.Property(c => c.CompanyName).HasMaxLength(200);
                 entity.Property(c => c.CompanyNumber).HasMaxLength(50);
                 entity.Property(c => c.VatNumber).HasMaxLength(50);
                 entity.Property(c => c.LegalRepresentative).HasMaxLength(200);
+                entity.Property(c => c.Address).HasMaxLength(300);
+                entity.Property(c => c.BankAccount).HasMaxLength(34);
+                entity.Property(c => c.Notes).HasMaxLength(1000);
+                entity.Property(c => c.IsActive).IsRequired().HasDefaultValue(true);
 
                 entity.Property(c => c.ClientType).HasConversion<int>();
+
+                entity.HasIndex(c => c.PersonalId)
+                    .IsUnique()
+                    .HasFilter("[PersonalId] IS NOT NULL");
+
+                entity.HasIndex(c => c.CompanyNumber)
+                    .IsUnique()
+                    .HasFilter("[CompanyNumber] IS NOT NULL");
 
                 entity.HasMany(c => c.ClientUnits)
                       .WithOne(cu => cu.Client)

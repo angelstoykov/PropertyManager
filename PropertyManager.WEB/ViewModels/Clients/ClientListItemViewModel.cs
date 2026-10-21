@@ -9,5 +9,7 @@ namespace PropertyManager.WEB.ViewModels.Clients
         public string DisplayName { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string Phone { get; set; } = null!;
+        public bool IsActive { get; set; }
+        public bool HasLinkedRecords { get; set; }
     }
 }

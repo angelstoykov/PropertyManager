@@ -42,8 +42,15 @@ namespace PropertyManager.API.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateClientDto dto)
         {
-            var id = await _clientsService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id }, id);
+            try
+            {
+                var id = await _clientsService.CreateAsync(dto);
+                return CreatedAtAction(nameof(GetById), new { id }, id);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -52,15 +59,43 @@ namespace PropertyManager.API.Controllers
             if (id != dto.Id)
                 return BadRequest();
 
-            await _clientsService.EditAsync(dto);
-            return NoContent();
+            try
+            {
+                await _clientsService.EditAsync(dto);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            await _clientsService.DeleteAsync(id);
-            return NoContent();
+            try
+            {
+                await _clientsService.DeleteAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+        }
+
+        [HttpPost("{id}/deactivate")]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            try
+            {
+                await _clientsService.DeactivateAsync(id);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("available-properties")]

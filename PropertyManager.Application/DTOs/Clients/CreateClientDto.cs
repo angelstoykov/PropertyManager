@@ -12,10 +12,15 @@ namespace PropertyManager.Application.DTOs.Clients
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? PersonalId { get; set; }
+        public DateTime? DateOfBirth { get; set; }
 
         public string? CompanyName { get; set; }
         public string? CompanyNumber { get; set; }
         public string? VatNumber { get; set; }
         public string? LegalRepresentative { get; set; }
+
+        public string? Address { get; set; }
+        public string? BankAccount { get; set; }
+        public string? Notes { get; set; }
     }
 }

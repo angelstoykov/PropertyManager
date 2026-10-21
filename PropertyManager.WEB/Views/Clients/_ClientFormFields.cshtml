@@ -7,18 +7,6 @@
             asp-items="Html.GetEnumSelectList<ClientType>()"></select>
 </div>
 
-<div class="form-group mb-3">
-    <label asp-for="Email"></label>
-    <input asp-for="Email" class="form-control" />
-    <span asp-validation-for="Email" class="text-danger"></span>
-</div>
-
-<div class="form-group mb-3">
-    <label asp-for="Phone"></label>
-    <input asp-for="Phone" class="form-control" />
-    <span asp-validation-for="Phone" class="text-danger"></span>
-</div>
-
 <div id="individualFields">
     <div class="form-group mb-3">
         <label asp-for="FirstName"></label>
@@ -33,10 +21,16 @@
     <div class="form-group mb-3">
         <label asp-for="PersonalId"></label>
         <input asp-for="PersonalId" class="form-control" />
+        <span asp-validation-for="PersonalId" class="text-danger"></span>
+    </div>
+    <div class="form-group mb-3">
+        <label asp-for="DateOfBirth"></label>
+        <input asp-for="DateOfBirth" class="form-control" type="date" />
+        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
     </div>
 </div>
 
-<div id="legalEntityFields" style="display: none;">
+<div id="companyFields" style="display: none;">
     <div class="form-group mb-3">
         <label asp-for="CompanyName"></label>
         <input asp-for="CompanyName" class="form-control" />
@@ -50,9 +44,49 @@
     <div class="form-group mb-3">
         <label asp-for="VatNumber"></label>
         <input asp-for="VatNumber" class="form-control" />
+        <span asp-validation-for="VatNumber" class="text-danger"></span>
     </div>
     <div class="form-group mb-3">
         <label asp-for="LegalRepresentative"></label>
         <input asp-for="LegalRepresentative" class="form-control" />
+        <span asp-validation-for="LegalRepresentative" class="text-danger"></span>
     </div>
 </div>
+
+<div class="form-group mb-3">
+    <label asp-for="Address"></label>
+    <input asp-for="Address" class="form-control" />
+    <span asp-validation-for="Address" class="text-danger"></span>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Phone"></label>
+    <input asp-for="Phone" class="form-control" />
+    <span asp-validation-for="Phone" class="text-danger"></span>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Email"></label>
+    <input asp-for="Email" class="form-control" />
+    <span asp-validation-for="Email" class="text-danger"></span>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="BankAccount"></label>
+    <input asp-for="BankAccount" class="form-control" />
+    <span asp-validation-for="BankAccount" class="text-danger"></span>
+</div>
+
+<div class="form-group mb-3">
+    <label asp-for="Notes"></label>
+    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Notes" class="text-danger"></span>
+</div>
+
+@if (Model.Id > 0)
+{
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+}

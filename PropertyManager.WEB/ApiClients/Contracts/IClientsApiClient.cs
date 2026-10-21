@@ -11,6 +11,7 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task CreateAsync(CreateClientDto dto);
         Task<HttpResponseMessage> UpdateAsync(EditClientDto dto);
         Task DeleteAsync(int id);
+        Task DeactivateAsync(int id);
         Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId);
         Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync();
         Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId);

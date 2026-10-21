@@ -31,7 +31,9 @@ namespace PropertyManager.WEB.Controllers
                     ClientType = c.ClientType,
                     DisplayName = c.DisplayName,
                     Email = c.Email,
-                    Phone = c.Phone
+                    Phone = c.Phone,
+                    IsActive = c.IsActive,
+                    HasLinkedRecords = c.HasLinkedRecords
                 })
                 .ToList();
 
@@ -59,6 +61,11 @@ namespace PropertyManager.WEB.Controllers
             try
             {
                 await _clientsApiClient.CreateAsync(dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
             }
             catch
             {
@@ -89,12 +96,12 @@ namespace PropertyManager.WEB.Controllers
 
             try
             {
-                var response = await _clientsApiClient.UpdateAsync(dto);
-                if (!response.IsSuccessStatusCode)
-                {
-                    ModelState.AddModelError("", "Error updating client.");
-                    return View(model);
-                }
+                await _clientsApiClient.UpdateAsync(dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
             }
             catch
             {
@@ -112,6 +119,9 @@ namespace PropertyManager.WEB.Controllers
             if (client == null)
                 return NotFound();
 
+            if (client.HasLinkedRecords)
+                return RedirectToAction(nameof(Deactivate), new { id });
+
             var model = new DeleteClientViewModel
             {
                 Id = client.Id,
@@ -125,13 +135,56 @@ namespace PropertyManager.WEB.Controllers
         [HttpPost]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            var client = await _clientsApiClient.GetByIdAsync(id);
+            if (client == null)
+                return NotFound();
+
+            if (client.HasLinkedRecords)
+                return RedirectToAction(nameof(Deactivate), new { id });
+
             try
             {
                 await _clientsApiClient.DeleteAsync(id);
             }
+            catch (InvalidOperationException)
+            {
+                return RedirectToAction(nameof(Deactivate), new { id });
+            }
             catch
             {
                 return RedirectToAction(nameof(Delete), new { id });
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            var client = await _clientsApiClient.GetByIdAsync(id);
+            if (client == null)
+                return NotFound();
+
+            var model = new DeleteClientViewModel
+            {
+                Id = client.Id,
+                ClientType = client.ClientType,
+                DisplayName = GetDisplayName(client)
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeactivateConfirmed(int id)
+        {
+            try
+            {
+                await _clientsApiClient.DeactivateAsync(id);
+            }
+            catch (InvalidOperationException)
+            {
+                return RedirectToAction(nameof(Deactivate), new { id });
             }
 
             return RedirectToAction(nameof(Index));
@@ -366,10 +419,14 @@ namespace PropertyManager.WEB.Controllers
             FirstName = model.FirstName,
             LastName = model.LastName,
             PersonalId = model.PersonalId,
+            DateOfBirth = model.DateOfBirth,
             CompanyName = model.CompanyName,
             CompanyNumber = model.CompanyNumber,
             VatNumber = model.VatNumber,
-            LegalRepresentative = model.LegalRepresentative
+            LegalRepresentative = model.LegalRepresentative,
+            Address = model.Address,
+            BankAccount = model.BankAccount,
+            Notes = model.Notes
         };
 
         private static EditClientDto MapToEditDto(ClientFormViewModel model) => new()
@@ -381,10 +438,15 @@ namespace PropertyManager.WEB.Controllers
             FirstName = model.FirstName,
             LastName = model.LastName,
             PersonalId = model.PersonalId,
+            DateOfBirth = model.DateOfBirth,
             CompanyName = model.CompanyName,
             CompanyNumber = model.CompanyNumber,
             VatNumber = model.VatNumber,
-            LegalRepresentative = model.LegalRepresentative
+            LegalRepresentative = model.LegalRepresentative,
+            Address = model.Address,
+            BankAccount = model.BankAccount,
+            Notes = model.Notes,
+            IsActive = model.IsActive
         };
 
         private static ClientFormViewModel MapToFormViewModel(ClientDto client) => new()
@@ -396,14 +458,19 @@ namespace PropertyManager.WEB.Controllers
             FirstName = client.FirstName,
             LastName = client.LastName,
             PersonalId = client.PersonalId,
+            DateOfBirth = client.DateOfBirth,
             CompanyName = client.CompanyName,
             CompanyNumber = client.CompanyNumber,
             VatNumber = client.VatNumber,
-            LegalRepresentative = client.LegalRepresentative
+            LegalRepresentative = client.LegalRepresentative,
+            Address = client.Address,
+            BankAccount = client.BankAccount,
+            Notes = client.Notes,
+            IsActive = client.IsActive
         };
 
         private static string GetDisplayName(ClientDto client) =>
-            client.ClientType == ClientType.LegalEntity
+            client.ClientType == ClientType.Company
                 ? client.CompanyName ?? string.Empty
                 : $"{client.FirstName} {client.LastName}".Trim();
 
