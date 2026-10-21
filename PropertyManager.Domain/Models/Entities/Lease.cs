@@ -10,9 +10,6 @@ namespace PropertyManager.Domain.Models.Entities
         public int UnitId { get; set; }
         public Unit Unit { get; set; } = null!;
 
-        public int TenantId { get; set; }
-        public Tenant Tenant { get; set; } = null!;
-
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 

@@ -380,15 +380,10 @@ namespace PropertyManager.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
                     b.Property<int>("UnitId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TenantId");
 
                     b.HasIndex("UnitId");
 
@@ -493,40 +488,6 @@ namespace PropertyManager.Data.Migrations
                     b.HasIndex("LeaseId");
 
                     b.ToTable("RentPayments");
-                });
-
-            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Tenant", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CompanyNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<bool>("IsCompany")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tenants");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Unit", b =>
@@ -712,19 +673,11 @@ namespace PropertyManager.Data.Migrations
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>
                 {
-                    b.HasOne("PropertyManager.Domain.Models.Entities.Tenant", "Tenant")
-                        .WithMany("Leases")
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
                         .WithMany("Leases")
                         .HasForeignKey("UnitId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Tenant");
 
                     b.Navigation("Unit");
                 });
@@ -828,11 +781,6 @@ namespace PropertyManager.Data.Migrations
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Property", b =>
                 {
                     b.Navigation("Units");
-                });
-
-            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Tenant", b =>
-                {
-                    b.Navigation("Leases");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Unit", b =>

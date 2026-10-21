@@ -39,13 +39,6 @@ namespace PropertyManager.Data
                 entity.HasMany(e => e.ClientUnits);
             });
 
-            // Tenant
-            modelBuilder.Entity<Tenant>(entity =>
-            {
-                entity.Property(t => t.FullName).IsRequired().HasMaxLength(200);
-                entity.Property(t => t.Email).HasMaxLength(200);
-            });
-
             // Lease
             modelBuilder.Entity<Lease>(entity =>
             {
@@ -55,11 +48,6 @@ namespace PropertyManager.Data
                 entity.HasOne(l => l.Unit)
                     .WithMany(u => u.Leases)
                     .HasForeignKey(l => l.UnitId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(l => l.Tenant)
-                    .WithMany(t => t.Leases)
-                    .HasForeignKey(l => l.TenantId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -72,22 +60,6 @@ namespace PropertyManager.Data
                     .WithMany(l => l.Payments)
                     .HasForeignKey(r => r.LeaseId)
                     .OnDelete(DeleteBehavior.Cascade);
-            });
-
-            // ----------------------------
-            // TENANT
-            // ----------------------------
-            modelBuilder.Entity<Tenant>(entity =>
-            {
-                entity.Property(t => t.FullName)
-                      .IsRequired()
-                      .HasMaxLength(200);
-
-                entity.Property(t => t.Email)
-                      .HasMaxLength(200);
-
-                entity.Property(t => t.Phone)
-                      .HasMaxLength(50);
             });
 
             // ----------------------------
@@ -104,11 +76,6 @@ namespace PropertyManager.Data
                 entity.HasOne(l => l.Unit)
                       .WithMany(u => u.Leases)
                       .HasForeignKey(l => l.UnitId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(l => l.Tenant)
-                      .WithMany(t => t.Leases)
-                      .HasForeignKey(l => l.TenantId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -239,7 +206,6 @@ namespace PropertyManager.Data
 
         public DbSet<Property> Properties => Set<Property>();
         public DbSet<Unit> Units => Set<Unit>();
-        public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<Lease> Leases => Set<Lease>();
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
