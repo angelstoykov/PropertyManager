@@ -1,0 +1,176 @@
+@using System.Globalization
+@using PropertyManager.WEB.ViewModels.Ownership
+@model OwnershipPageViewModel
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">@Model.Title</h2>
+        <div>@Model.TargetName</div>
+    </div>
+    @if (Model.PropertyId is int propertyId)
+    {
+        <a class="btn btn-sm btn-primary"
+           asp-controller="Units"
+           asp-action="Index"
+           asp-route-propertyId="@propertyId">View units</a>
+    }
+</div>
+
+<ul class="nav nav-tabs mb-3">
+    @if (Model.PropertyId is int tabPropertyId && Model.UnitId == null)
+    {
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Units" asp-action="Index" asp-route-propertyId="@tabPropertyId">Units</a>
+        </li>
+        <li class="nav-item">
+            <span class="nav-link active">Owners</span>
+        </li>
+    }
+</ul>
+
+<form method="get"
+      asp-controller="@(Model.UnitId == null ? "Ownership" : "Units")"
+      asp-action="@(Model.UnitId == null ? "Property" : "Details")"
+      class="row g-2 align-items-end mb-3">
+    <input type="hidden" name="id" value="@(Model.UnitId ?? Model.PropertyId)" />
+    <div class="col-md-3">
+        <label class="form-label" for="asOf">Who owned this on</label>
+        <input id="asOf" type="date" name="date" value="@Model.AsOf.ToString("yyyy-MM-dd")" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary">Show</button>
+    </div>
+</form>
+
+@if (Model.IsInherited)
+{
+    <div class="alert alert-info">
+        Ownership is inherited from @Model.BuildingName. The owners below are the building owners on @Model.AsOf.ToString("yyyy-MM-dd").
+        Saving owners on this unit replaces that inheritance from the effective date.
+    </div>
+}
+else if (Model.UnitId != null)
+{
+    <div class="alert alert-secondary">Ownership is set on this unit.</div>
+}
+
+<h3>Owners on @Model.AsOf.ToString("yyyy-MM-dd")</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Owner</th>
+            <th>Share</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Owners.Count == 0)
+        {
+            <tr>
+                <td colspan="2" class="text-muted">No owners on this date.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var owner in Model.Owners)
+            {
+                <tr>
+                    <td>
+                        <a asp-controller="Clients" asp-action="Ownership" asp-route-id="@owner.ClientId">@owner.ClientName</a>
+                    </td>
+                    <td>@OwnershipDisplay.Share(owner.SharePercent)</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h3 class="mt-4">Change ownership</h3>
+<p class="text-muted">Shares must total 100%. The current period is closed on the effective date and a new one is opened. Earlier records stay as history.</p>
+<form asp-controller="Ownership" asp-action="@(Model.UnitId == null ? "SetProperty" : "SetUnit")" method="post" class="mb-4">
+    <input type="hidden" asp-for="PropertyId" />
+    <input type="hidden" asp-for="UnitId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-3">
+            <label asp-for="EffectiveDate" class="form-label">Effective date</label>
+            <input asp-for="EffectiveDate" type="date" class="form-control" />
+        </div>
+        <div class="col-md-4">
+            <div class="form-check">
+                <input asp-for="EndOwnership" class="form-check-input" />
+                <label asp-for="EndOwnership" class="form-check-label">End ownership on this date</label>
+            </div>
+        </div>
+    </div>
+    <div id="ownership-shares">
+        @for (var i = 0; i < Model.Shares.Count; i++)
+        {
+            <div class="row g-2 mb-2 ownership-share-row">
+                <div class="col-md-6">
+                    <label class="form-label">Owner</label>
+                    <select name="Shares[@i].ClientId" class="form-select">
+                        <!option value="">Select a client</!option>
+                        @foreach (var client in Model.Clients)
+                        {
+                            <!option value="@client.Value" @(Model.Shares[i].ClientId?.ToString() == client.Value ? "selected" : null)>@client.Text</!option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Share %</label>
+                    <input name="Shares[@i].SharePercent" value="@Model.Shares[i].SharePercent?.ToString("0.##", CultureInfo.InvariantCulture)" class="form-control" type="number" step="0.01" min="0.01" max="100" />
+                </div>
+            </div>
+        }
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="add-ownership-row">Add owner</button>
+    <div>
+        <button type="submit" class="btn btn-primary">Save ownership</button>
+    </div>
+</form>
+
+<h3>History</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Period</th>
+            <th>Owners</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.History.Count == 0)
+        {
+            <tr>
+                <td colspan="2" class="text-muted">No ownership has been recorded here.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var period in Model.History)
+            {
+                <tr>
+                    <td>@period.Period</td>
+                    <td>@period.Owners</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<script>
+    document.getElementById('add-ownership-row')?.addEventListener('click', function () {
+        const holder = document.getElementById('ownership-shares');
+        const rows = holder.querySelectorAll('.ownership-share-row');
+        const next = rows.length;
+        const clone = rows[rows.length - 1].cloneNode(true);
+        clone.querySelectorAll('select, input').forEach(function (field) {
+            field.name = field.name.replace(/Shares\[\d+\]/, 'Shares[' + next + ']');
+            if (field.tagName === 'SELECT') {
+                field.selectedIndex = 0;
+            } else {
+                field.value = '';
+            }
+        });
+        holder.appendChild(clone);
+    });
+</script>

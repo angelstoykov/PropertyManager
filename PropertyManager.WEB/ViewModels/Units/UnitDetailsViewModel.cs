@@ -17,5 +17,6 @@
         public IReadOnlyList<UnitPriceTotalViewModel> Totals { get; set; } = Array.Empty<UnitPriceTotalViewModel>();
         public UnitPriceFormViewModel PriceForm { get; set; } = new();
         public bool HasActiveCatalogComponents { get; set; }
+        public Ownership.OwnershipPageViewModel? Ownership { get; set; }
     }
 }

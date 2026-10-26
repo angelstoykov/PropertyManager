@@ -137,6 +137,36 @@ namespace PropertyManager.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<OwnershipRecord>(entity =>
+            {
+                entity.Property(o => o.SharePercent).HasColumnType("decimal(5,2)");
+                entity.Property(o => o.StartDate).HasColumnType("date");
+                entity.Property(o => o.EndDate).HasColumnType("date");
+
+                entity.ToTable(table => table.HasCheckConstraint(
+                    "CK_OwnershipRecords_Target",
+                    "([PropertyId] IS NOT NULL AND [UnitId] IS NULL) OR ([PropertyId] IS NULL AND [UnitId] IS NOT NULL)"));
+
+                entity.HasOne(o => o.Property)
+                    .WithMany()
+                    .HasForeignKey(o => o.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(o => o.Unit)
+                    .WithMany()
+                    .HasForeignKey(o => o.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(o => o.Client)
+                    .WithMany(c => c.OwnershipRecords)
+                    .HasForeignKey(o => o.ClientId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(o => o.ClientId);
+                entity.HasIndex(o => new { o.PropertyId, o.StartDate });
+                entity.HasIndex(o => new { o.UnitId, o.StartDate });
+            });
+
             modelBuilder.Entity<ClientUnit>()
                 .HasKey(cu => new { cu.ClientId, cu.UnitId });
 
@@ -243,6 +273,7 @@ namespace PropertyManager.Data
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<ClientRole> ClientRoles => Set<ClientRole>();
+        public DbSet<OwnershipRecord> OwnershipRecords => Set<OwnershipRecord>();
         public DbSet<UnitFinancialRecord> UnitFinancialRecords => Set<UnitFinancialRecord>();
         public DbSet<FinancialRecordSubtype> FinancialRecordSubtypes => Set<FinancialRecordSubtype>();
         public DbSet<Currency> Currencies => Set<Currency>();

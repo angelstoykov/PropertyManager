@@ -144,6 +144,10 @@ else
                                 {
                                     @(string.IsNullOrWhiteSpace(client.RentedUnits) ? "—" : client.RentedUnits)
                                 }
+                                else if (column == "Ownership")
+                                {
+                                    @(string.IsNullOrWhiteSpace(client.Ownership) ? "—" : client.Ownership)
+                                }
                                 else if (column == "Status")
                                 {
                                     @(client.IsActive ? "Active" : "Inactive")
@@ -153,6 +157,10 @@ else
                         <td class="text-nowrap">
                             <a asp-action="Edit" asp-route-id="@client.Id" class="btn btn-sm btn-warning">Edit</a>
                             <a asp-action="RentedUnits" asp-route-id="@client.Id" class="btn btn-sm btn-primary">Rented Units</a>
+                            @if (Model.CanViewOwnership)
+                            {
+                                <a asp-action="Ownership" asp-route-id="@client.Id" class="btn btn-sm btn-outline-primary">Ownership</a>
+                            }
                             @if (client.HasLinkedRecords)
                             {
                                 @if (client.IsActive)

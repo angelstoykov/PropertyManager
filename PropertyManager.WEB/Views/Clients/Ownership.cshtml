@@ -1,0 +1,90 @@
+@using PropertyManager.WEB.ViewModels.Ownership
+@model ClientOwnershipPageViewModel
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Ownership</h2>
+        <div>@Model.ClientName</div>
+    </div>
+    <a asp-controller="Clients" asp-action="Edit" asp-route-id="@Model.ClientId" class="btn btn-sm btn-warning">Edit client</a>
+</div>
+
+<h3>Current</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Kind</th>
+            <th>Property or unit</th>
+            <th>Share</th>
+            <th>Period</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Current.Count == 0)
+        {
+            <tr>
+                <td colspan="4" class="text-muted">This client does not own anything today.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in Model.Current)
+            {
+                <tr>
+                    <td>@item.Kind</td>
+                    <td>
+                        @if (item.UnitId is int unitId)
+                        {
+                            <a asp-controller="Units" asp-action="Details" asp-route-id="@unitId">@item.TargetName</a>
+                        }
+                        else if (item.PropertyId is int propertyId)
+                        {
+                            <a asp-controller="Ownership" asp-action="Property" asp-route-id="@propertyId">@item.TargetName</a>
+                        }
+                        else
+                        {
+                            @item.TargetName
+                        }
+                    </td>
+                    <td>@item.Share</td>
+                    <td>@item.Period</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<h3 class="mt-4">History</h3>
+<p class="text-muted">Direct ownership is stored on the building or unit. An inherited unit follows the building share while that unit has no owners of its own.</p>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Kind</th>
+            <th>Property or unit</th>
+            <th>Share</th>
+            <th>Period</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.History.Count == 0)
+        {
+            <tr>
+                <td colspan="4" class="text-muted">No ownership records.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in Model.History)
+            {
+                <tr>
+                    <td>@item.Kind</td>
+                    <td>@item.TargetName</td>
+                    <td>@item.Share</td>
+                    <td>@item.Period</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<a asp-controller="Clients" asp-action="Index" class="btn btn-secondary">Back to Clients</a>

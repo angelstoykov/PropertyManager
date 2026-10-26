@@ -448,6 +448,46 @@ namespace PropertyManager.Data.Migrations
                     b.ToTable("Leases");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.OwnershipRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SharePercent")
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("date");
+
+                    b.Property<int?>("UnitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("PropertyId", "StartDate");
+
+                    b.HasIndex("UnitId", "StartDate");
+
+                    b.ToTable("OwnershipRecords", t =>
+                        {
+                            t.HasCheckConstraint("CK_OwnershipRecords_Target", "([PropertyId] IS NOT NULL AND [UnitId] IS NULL) OR ([PropertyId] IS NULL AND [UnitId] IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.PriceComponent", b =>
                 {
                     b.Property<int>("Id")
@@ -756,6 +796,31 @@ namespace PropertyManager.Data.Migrations
                     b.Navigation("Unit");
                 });
 
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.OwnershipRecord", b =>
+                {
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Client", "Client")
+                        .WithMany("OwnershipRecords")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Property", "Property")
+                        .WithMany()
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
+                        .WithMany()
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Client");
+
+                    b.Navigation("Property");
+
+                    b.Navigation("Unit");
+                });
+
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.RentPayment", b =>
                 {
                     b.HasOne("PropertyManager.Domain.Models.Entities.Lease", "Lease")
@@ -844,6 +909,8 @@ namespace PropertyManager.Data.Migrations
                     b.Navigation("ClientUnits");
 
                     b.Navigation("ContractorExpenses");
+
+                    b.Navigation("OwnershipRecords");
 
                     b.Navigation("Roles");
                 });

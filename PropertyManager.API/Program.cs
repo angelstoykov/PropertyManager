@@ -70,6 +70,7 @@ namespace PropertyManager.API
             builder.Services.AddScoped<IUnitsService, UnitsService>();
             builder.Services.AddScoped<IPropertyService, PropertyService>();
             builder.Services.AddScoped<IClientsService, ClientsService>();
+            builder.Services.AddScoped<IOwnershipService, OwnershipService>();
             builder.Services.AddScoped<IUnitFinancialRecordsService, UnitFinancialRecordsService>();
             builder.Services.AddScoped<IFinancialRecordSubtypesService, FinancialRecordSubtypesService>();
             builder.Services.AddScoped<IPriceComponentsService, PriceComponentsService>();

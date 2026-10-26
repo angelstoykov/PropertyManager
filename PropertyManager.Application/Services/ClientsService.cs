@@ -42,6 +42,7 @@ namespace PropertyManager.Application.Services
                 c.Roles.Any(r => r.IsActive && r.Role == ClientRoleType.Contractor));
 
             var listed = ApplyTab(visible, query, allowed);
+            var today = DateTime.Today;
             var clients = await listed
                 .OrderByDescending(c => c.IsActive)
                 .ThenBy(c => c.ClientType)
@@ -58,7 +59,7 @@ namespace PropertyManager.Application.Services
                     Email = c.Email,
                     Phone = c.Phone,
                     IsActive = c.IsActive,
-                    HasLinkedRecords = c.ClientUnits.Any() || c.ContractorExpenses.Any(),
+                    HasLinkedRecords = c.ClientUnits.Any() || c.ContractorExpenses.Any() || c.OwnershipRecords.Any(),
                     Roles = c.Roles
                         .Where(r => allowed.Contains(r.Role))
                         .Select(r => new ClientRoleDto
@@ -73,6 +74,33 @@ namespace PropertyManager.Application.Services
                         .ToList()
                 })
                 .ToListAsync();
+
+            if (clients.Count > 0)
+            {
+                var ids = clients.Select(c => c.Id).ToList();
+                var shares = await _context.OwnershipRecords.AsNoTracking()
+                    .Where(o => ids.Contains(o.ClientId)
+                        && o.StartDate <= today
+                        && (o.EndDate == null || today < o.EndDate))
+                    .Select(o => new
+                    {
+                        o.ClientId,
+                        o.SharePercent,
+                        Name = o.PropertyId != null
+                            ? o.Property!.Name
+                            : o.Unit!.Property.Name + " · " + o.Unit.UnitNumber
+                    })
+                    .ToListAsync();
+
+                foreach (var client in clients)
+                {
+                    client.OwnershipLabels = shares
+                        .Where(share => share.ClientId == client.Id)
+                        .Select(share => $"{share.Name} {share.SharePercent:0.##}%")
+                        .OrderBy(label => label, StringComparer.CurrentCultureIgnoreCase)
+                        .ToList();
+                }
+            }
 
             foreach (var client in clients)
             {
@@ -104,6 +132,7 @@ namespace PropertyManager.Application.Services
                 .Include(c => c.ClientUnits)
                 .Include(c => c.Roles)
                 .Include(c => c.ContractorExpenses)
+                .Include(c => c.OwnershipRecords)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (client == null || !IsVisible(client, allowed))
@@ -156,8 +185,10 @@ namespace PropertyManager.Application.Services
 
             var hasContractorExpenses = await _context.UnitFinancialRecords
                 .AnyAsync(r => r.ContractorClientId == id);
+            var hasOwnership = await _context.OwnershipRecords
+                .AnyAsync(o => o.ClientId == id);
 
-            if (client.ClientUnits.Count > 0 || hasContractorExpenses)
+            if (client.ClientUnits.Count > 0 || hasContractorExpenses || hasOwnership)
                 throw new InvalidOperationException(
                     "This client is linked to records and can only be deactivated.");
 
@@ -328,7 +359,9 @@ namespace PropertyManager.Application.Services
             }
 
             return client.RentedUnitLabels.Any(label =>
-                label.Contains(term, StringComparison.OrdinalIgnoreCase));
+                    label.Contains(term, StringComparison.OrdinalIgnoreCase))
+                || client.OwnershipLabels.Any(label =>
+                    label.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         private static IQueryable<Client> ApplyListFilters(IQueryable<Client> query, ClientListQuery filters)
@@ -345,7 +378,14 @@ namespace PropertyManager.Application.Services
             if (filters.BuildingId is > 0)
             {
                 var buildingId = filters.BuildingId.Value;
-                query = query.Where(c => c.ClientUnits.Any(cu => cu.Unit.PropertyId == buildingId));
+                var today = DateTime.Today;
+                query = query.Where(c =>
+                    c.ClientUnits.Any(cu => cu.Unit.PropertyId == buildingId)
+                    || c.OwnershipRecords.Any(o =>
+                        o.StartDate <= today &&
+                        (o.EndDate == null || today < o.EndDate) &&
+                        (o.PropertyId == buildingId ||
+                         (o.UnitId != null && o.Unit!.PropertyId == buildingId))));
             }
 
             return query;
@@ -570,7 +610,9 @@ namespace PropertyManager.Application.Services
             BankAccount = client.BankAccount,
             Notes = client.Notes,
             IsActive = client.IsActive,
-            HasLinkedRecords = client.ClientUnits.Count > 0 || client.ContractorExpenses.Count > 0,
+            HasLinkedRecords = client.ClientUnits.Count > 0
+                || client.ContractorExpenses.Count > 0
+                || client.OwnershipRecords.Count > 0,
             Roles = client.Roles
                 .Where(r => allowed.Contains(r.Role))
                 .OrderBy(r => r.Role)

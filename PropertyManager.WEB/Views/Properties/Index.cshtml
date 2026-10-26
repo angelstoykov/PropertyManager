@@ -40,6 +40,12 @@
                            asp-route-propertyId="@property.Id">
                         View units
                     </a>
+                    <a class="btn btn-sm btn-outline-primary"
+                           asp-controller="Ownership"
+                           asp-action="Property"
+                           asp-route-id="@property.Id">
+                        Owners
+                    </a>
                 </td>
             </tr>
         }

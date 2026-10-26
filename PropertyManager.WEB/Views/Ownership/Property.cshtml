@@ -1,0 +1,12 @@
+@using PropertyManager.WEB.ViewModels.Ownership
+@model OwnershipPageViewModel
+
+@if (Model.PropertyId == null && Model.UnitId == null)
+{
+    <h2>Owners</h2>
+    <p class="text-danger">@Model.TargetName</p>
+}
+else
+{
+    <partial name="_OwnershipPanel" model="Model" />
+}

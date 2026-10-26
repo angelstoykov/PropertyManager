@@ -114,6 +114,11 @@ namespace PropertyManager.Application.Services
                 throw new InvalidOperationException(
                     "Cannot delete unit with existing leases.");
 
+            var hasOwnership = await _context.OwnershipRecords.AnyAsync(o => o.UnitId == id);
+            if (hasOwnership)
+                throw new InvalidOperationException(
+                    "Cannot delete a unit that has ownership records.");
+
             var unit = await _context.Units.FindAsync(id);
             if (unit == null)
                 return;

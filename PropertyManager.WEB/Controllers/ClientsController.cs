@@ -2,11 +2,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Application.DTOs.Clients;
+using PropertyManager.Application.DTOs.Ownership;
 using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.Domain.Constants;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
 using PropertyManager.WEB.ViewModels.Clients;
+using PropertyManager.WEB.ViewModels.Ownership;
 
 namespace PropertyManager.WEB.Controllers
 {
@@ -18,16 +20,19 @@ namespace PropertyManager.WEB.Controllers
         private readonly ICurrencyApiClient _currencyApiClient;
         private readonly IFinancialRecordSubtypesApiClient _subtypesApiClient;
         private readonly IPropertyApiClient _propertyApiClient;
+        private readonly IOwnershipApiClient _ownershipApiClient;
 
         public ClientsController(IClientsApiClient clientsApiClient,
                                  ICurrencyApiClient currencyApiClient,
                                  IFinancialRecordSubtypesApiClient subtypesApiClient,
-                                 IPropertyApiClient propertyApiClient)
+                                 IPropertyApiClient propertyApiClient,
+                                 IOwnershipApiClient ownershipApiClient)
         {
             _clientsApiClient = clientsApiClient;
             _currencyApiClient = currencyApiClient;
             _subtypesApiClient = subtypesApiClient;
             _propertyApiClient = propertyApiClient;
+            _ownershipApiClient = ownershipApiClient;
         }
 
         public async Task<IActionResult> Index(
@@ -38,7 +43,8 @@ namespace PropertyManager.WEB.Controllers
             ClientType? clientType,
             int? buildingId)
         {
-            var permitted = PermittedTabs(CurrentAccess());
+            var allowed = CurrentAccess();
+            var permitted = PermittedTabs(allowed);
             if (permitted.Count == 0)
                 return View(new ClientsIndexViewModel { AccessDenied = true });
 
@@ -83,6 +89,7 @@ namespace PropertyManager.WEB.Controllers
                 ClientType = clientType,
                 BuildingId = buildingId,
                 CreateRole = CreateRoleFor(normalized),
+                CanViewOwnership = allowed.Contains(ClientRoleType.Owner),
                 Columns = ColumnsFor(normalized),
                 Tabs = permitted.Select(key => new ClientTabViewModel
                 {
@@ -104,8 +111,43 @@ namespace PropertyManager.WEB.Controllers
                     IsActive = c.IsActive,
                     HasLinkedRecords = c.HasLinkedRecords,
                     RentedUnits = string.Join(", ", c.RentedUnitLabels),
+                    Ownership = string.Join(", ", c.OwnershipLabels),
                     Roles = c.Roles.Select(ClientRolePresentation.ToBadge).ToList()
                 }).ToList()
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Ownership(int id)
+        {
+            if (!CurrentAccess().Contains(ClientRoleType.Owner))
+                return Forbid();
+
+            var client = await _clientsApiClient.GetByIdAsync(id);
+            if (client == null)
+                return NotFound();
+
+            var ownership = await _ownershipApiClient.GetClientAsync(id);
+            var today = DateTime.Today;
+            ClientOwnershipRowViewModel Map(ClientOwnershipItemDto item) => new()
+            {
+                TargetName = item.TargetName,
+                Kind = item.Kind,
+                Share = OwnershipDisplay.Share(item.SharePercent),
+                Period = OwnershipDisplay.Period(item.StartDate, item.EndDate),
+                PropertyId = item.PropertyId,
+                UnitId = item.UnitId
+            };
+
+            return View(new ClientOwnershipPageViewModel
+            {
+                ClientId = ownership.ClientId,
+                ClientName = ownership.ClientName,
+                Current = ownership.Items
+                    .Where(item => item.StartDate <= today && (item.EndDate == null || today < item.EndDate))
+                    .Select(Map)
+                    .ToList(),
+                History = ownership.Items.Select(Map).ToList()
             });
         }
 
@@ -690,7 +732,7 @@ namespace PropertyManager.WEB.Controllers
 
         private static IReadOnlyList<string> ColumnsFor(string tab) => tab switch
         {
-            "owners" => ["Name", "Roles", "Email", "Phone", "Status"],
+            "owners" => ["Name", "Roles", "Ownership", "Email", "Phone", "Status"],
             "tenants" => ["Name", "Roles", "RentedUnits", "Phone", "Status"],
             "contractors" => ["Name", "Type", "Roles", "Phone", "Email", "Status"],
             _ => ["Name", "Type", "Roles", "Email", "Phone", "Status"]

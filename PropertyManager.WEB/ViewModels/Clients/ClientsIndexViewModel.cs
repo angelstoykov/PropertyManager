@@ -12,6 +12,7 @@ namespace PropertyManager.WEB.ViewModels.Clients
         public ClientType? ClientType { get; set; }
         public int? BuildingId { get; set; }
         public ClientRoleType? CreateRole { get; set; }
+        public bool CanViewOwnership { get; set; }
         public bool AccessDenied { get; set; }
         public IReadOnlyList<string> Columns { get; set; } = [];
         public IReadOnlyList<ClientTabViewModel> Tabs { get; set; } = [];

@@ -28,6 +28,18 @@
     </div>
 </div>
 
+@if (TempData["OwnershipError"] is string ownershipError)
+{
+    <div class="alert alert-danger mt-3">@ownershipError</div>
+}
+
+@if (Model.Ownership != null)
+{
+    <div class="mt-4">
+        <partial name="~/Views/Ownership/_OwnershipPanel.cshtml" model="Model.Ownership" />
+    </div>
+}
+
 <h3 class="mt-4">Price</h3>
 
 @if (TempData["Error"] is string error)

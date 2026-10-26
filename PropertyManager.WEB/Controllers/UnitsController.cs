@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Application.DTOs.Unit;
 using PropertyManager.Application.DTOs.UnitPriceComponents;
+using PropertyManager.Domain.Constants;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
+using PropertyManager.WEB.ViewModels.Ownership;
 using PropertyManager.WEB.ViewModels.Units;
 
 public class UnitsController : Controller
@@ -12,17 +14,23 @@ public class UnitsController : Controller
     private readonly IUnitsApiClient _unitsApiClient;
     private readonly ICurrencyApiClient _currencyApiClient;
     private readonly IPriceComponentsApiClient _priceComponentsApiClient;
+    private readonly IOwnershipApiClient _ownershipApiClient;
+    private readonly IClientsApiClient _clientsApiClient;
 
     public UnitsController(
         IPropertyApiClient propertyApiClient,
         IUnitsApiClient unitsApiClient,
         ICurrencyApiClient currencyApiClient,
-        IPriceComponentsApiClient priceComponentsApiClient)
+        IPriceComponentsApiClient priceComponentsApiClient,
+        IOwnershipApiClient ownershipApiClient,
+        IClientsApiClient clientsApiClient)
     {
         _propertyApiClient = propertyApiClient;
         _unitsApiClient = unitsApiClient;
         _currencyApiClient = currencyApiClient;
         _priceComponentsApiClient = priceComponentsApiClient;
+        _ownershipApiClient = ownershipApiClient;
+        _clientsApiClient = clientsApiClient;
     }
 
     public async Task<IActionResult> Index(int? propertyId, UnitStatus? status, int page = 1)
@@ -194,14 +202,14 @@ public class UnitsController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(int id)
+    public async Task<IActionResult> Details(int id, DateTime? date)
     {
         var unit = await _unitsApiClient.GetUnitByIdAsync(id);
 
         if (unit == null)
             return NotFound();
 
-        return View(await BuildDetailsAsync(unit));
+        return View(await BuildDetailsAsync(unit, date: date));
     }
 
     [HttpPost]
@@ -309,7 +317,7 @@ public class UnitsController : Controller
         return RedirectToAction(nameof(Details), new { id = unitId });
     }
 
-    private async Task<UnitDetailsViewModel> BuildDetailsAsync(UnitDto unit, UnitPriceFormViewModel? form = null)
+    private async Task<UnitDetailsViewModel> BuildDetailsAsync(UnitDto unit, UnitPriceFormViewModel? form = null, DateTime? date = null)
     {
         var properties = await _propertyApiClient.GetAllAsync();
         var lines = await _unitsApiClient.GetPriceComponentsAsync(unit.Id);
@@ -355,6 +363,14 @@ public class UnitsController : Controller
             .OrderBy(total => total.CurrencySymbol)
             .ToList();
 
+        OwnershipPageViewModel? ownership = null;
+        if (ClientAccess.Resolve(User).Contains(ClientRoleType.Owner))
+        {
+            var dto = await _ownershipApiClient.GetUnitAsync(unit.Id, date);
+            var clients = await _clientsApiClient.GetAllAsync(new PropertyManager.Application.DTOs.Clients.ClientListQuery { Tab = "all" });
+            ownership = OwnershipDisplay.FromTarget(dto, clients.Clients, prefillOwners: true);
+        }
+
         return new UnitDetailsViewModel
         {
             Id = unit.Id,
@@ -376,7 +392,8 @@ public class UnitsController : Controller
             }).ToList(),
             Totals = totals,
             PriceForm = form,
-            HasActiveCatalogComponents = catalog.Any(component => component.IsActive)
+            HasActiveCatalogComponents = catalog.Any(component => component.IsActive),
+            Ownership = ownership
         };
     }
 

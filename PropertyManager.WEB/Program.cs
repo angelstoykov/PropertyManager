@@ -83,6 +83,10 @@ namespace PropertyManager.WEB
                     client.BaseAddress = new Uri(apiBaseUrl))
                 .AddHttpMessageHandler<JwtBearerHandler>();
 
+            builder.Services.AddHttpClient<IOwnershipApiClient, OwnershipApiClient>(client =>
+                    client.BaseAddress = new Uri(apiBaseUrl))
+                .AddHttpMessageHandler<JwtBearerHandler>();
+
             var app = builder.Build();
 
             using (var scope = app.Services.CreateScope())

@@ -13,5 +13,6 @@ namespace PropertyManager.Application.DTOs.Clients
         public bool HasLinkedRecords { get; set; }
         public List<ClientRoleDto> Roles { get; set; } = [];
         public List<string> RentedUnitLabels { get; set; } = [];
+        public List<string> OwnershipLabels { get; set; } = [];
     }
 }
