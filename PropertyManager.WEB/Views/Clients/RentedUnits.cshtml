@@ -57,7 +57,8 @@
                     <td>@property.Address</td>
                     <td>@property.UnitNumber</td>
                     <td>
-                        <a asp-action="UnitFinancialRecords"
+                        <a asp-controller="FinancialRecords"
+                           asp-action="Index"
                            asp-route-clientId="@Model.ClientId"
                            asp-route-unitId="@property.UnitId"
                            class="btn btn-sm btn-info me-1">Financial Records</a>

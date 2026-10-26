@@ -1,4 +1,4 @@
-namespace PropertyManager.WEB.ViewModels.Clients
+namespace PropertyManager.WEB.ViewModels.FinancialRecords
 {
     public class FinancialRecordSubtypeOption
     {

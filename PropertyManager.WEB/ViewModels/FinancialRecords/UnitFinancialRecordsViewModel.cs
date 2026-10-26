@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.WEB.ApiClients.Contracts;
 
-namespace PropertyManager.WEB.ViewModels.Clients
+namespace PropertyManager.WEB.ViewModels.FinancialRecords
 {
     public class UnitFinancialRecordsViewModel
     {

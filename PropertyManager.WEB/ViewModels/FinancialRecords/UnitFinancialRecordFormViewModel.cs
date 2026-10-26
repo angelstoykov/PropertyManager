@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
 
-namespace PropertyManager.WEB.ViewModels.Clients
+namespace PropertyManager.WEB.ViewModels.FinancialRecords
 {
     public class UnitFinancialRecordFormViewModel
     {

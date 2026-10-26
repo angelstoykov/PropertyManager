@@ -15,7 +15,7 @@
 
         @if (Model.ClientId is int)
         {
-            <a asp-controller="Clients" asp-action="UnitFinancialRecords"
+            <a asp-controller="FinancialRecords" asp-action="Index"
                asp-route-clientId="@Model.ClientId"
                asp-route-unitId="@Model.Id"
                class="btn btn-info me-1">Financial Records</a>

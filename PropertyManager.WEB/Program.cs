@@ -83,6 +83,10 @@ namespace PropertyManager.WEB
                     client.BaseAddress = new Uri(apiBaseUrl))
                 .AddHttpMessageHandler<JwtBearerHandler>();
 
+            builder.Services.AddHttpClient<IFinancialRecordsApiClient, FinancialRecordsApiClient>(client =>
+                    client.BaseAddress = new Uri(apiBaseUrl))
+                .AddHttpMessageHandler<JwtBearerHandler>();
+
             builder.Services.AddHttpClient<IOwnershipApiClient, OwnershipApiClient>(client =>
                     client.BaseAddress = new Uri(apiBaseUrl))
                 .AddHttpMessageHandler<JwtBearerHandler>();

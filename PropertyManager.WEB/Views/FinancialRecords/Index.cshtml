@@ -1,5 +1,5 @@
 @using PropertyManager.Domain.Models.Enums
-@using PropertyManager.WEB.ViewModels.Clients
+@using PropertyManager.WEB.ViewModels.FinancialRecords
 
 @model UnitFinancialRecordsViewModel
 
@@ -11,7 +11,7 @@
 </div>
 
 <h4 class="mt-4">Add Record</h4>
-<form asp-action="AddFinancialRecord" method="post" class="row g-2 align-items-end mb-4">
+<form asp-action="Create" method="post" class="row g-2 align-items-end mb-4">
     <input type="hidden" asp-for="FinancialRecord.ClientId" />
     <input type="hidden" asp-for="FinancialRecord.UnitId" />
     <input type="hidden" asp-for="FinancialRecord.FilterSubtypeId" />
@@ -63,7 +63,7 @@
     </div>
 </form>
 
-<form asp-action="UnitFinancialRecords" method="get" class="row g-2 align-items-end mb-3">
+<form asp-action="Index" method="get" class="row g-2 align-items-end mb-3">
     <input type="hidden" name="clientId" value="@Model.ClientId" />
     <input type="hidden" name="unitId" value="@Model.UnitId" />
     <div class="col-md-4">
@@ -132,13 +132,13 @@
                     <td>@(string.IsNullOrWhiteSpace(record.ContractorName) ? "—" : record.ContractorName)</td>
                     <td>@(string.IsNullOrWhiteSpace(record.Comment) ? "—" : record.Comment)</td>
                     <td class="text-nowrap">
-                        <a asp-action="EditFinancialRecord"
+                        <a asp-action="Edit"
                            asp-route-clientId="@Model.ClientId"
                            asp-route-unitId="@Model.UnitId"
                            asp-route-id="@record.Id"
                            asp-route-subtypeId="@Model.SelectedSubtypeId"
                            class="btn btn-sm btn-warning">Edit</a>
-                        <form asp-action="DeleteFinancialRecord" method="post" class="d-inline">
+                        <form asp-action="Delete" method="post" class="d-inline">
                             <input type="hidden" name="clientId" value="@Model.ClientId" />
                             <input type="hidden" name="unitId" value="@Model.UnitId" />
                             <input type="hidden" name="id" value="@record.Id" />
@@ -153,7 +153,7 @@
     </tbody>
 </table>
 
-<a asp-action="RentedUnits" asp-route-id="@Model.ClientId" class="btn btn-secondary">Back to Rented Units</a>
+<a asp-controller="Clients" asp-action="RentedUnits" asp-route-id="@Model.ClientId" class="btn btn-secondary">Back to Rented Units</a>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

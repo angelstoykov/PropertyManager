@@ -1,11 +1,11 @@
 @using PropertyManager.Domain.Models.Enums
-@using PropertyManager.WEB.ViewModels.Clients
+@using PropertyManager.WEB.ViewModels.FinancialRecords
 
 @model UnitFinancialRecordFormViewModel
 
 <h2>Edit Financial Record</h2>
 
-<form asp-action="EditFinancialRecord" method="post">
+<form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="ClientId" />
     <input type="hidden" asp-for="UnitId" />
@@ -61,7 +61,7 @@
     </div>
 
     <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-action="UnitFinancialRecords"
+    <a asp-action="Index"
        asp-route-clientId="@Model.ClientId"
        asp-route-unitId="@Model.UnitId"
        asp-route-subtypeId="@Model.FilterSubtypeId"

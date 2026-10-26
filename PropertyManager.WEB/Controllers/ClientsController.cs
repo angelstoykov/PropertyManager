@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using PropertyManager.Application.DTOs.Clients;
 using PropertyManager.Application.DTOs.Ownership;
-using PropertyManager.Application.DTOs.UnitFinancialRecords;
 using PropertyManager.Domain.Constants;
 using PropertyManager.Domain.Models.Enums;
 using PropertyManager.WEB.ApiClients.Contracts;
@@ -17,20 +16,14 @@ namespace PropertyManager.WEB.Controllers
         private const string TabCookieName = "pm.clients.tab";
 
         private readonly IClientsApiClient _clientsApiClient;
-        private readonly ICurrencyApiClient _currencyApiClient;
-        private readonly IFinancialRecordSubtypesApiClient _subtypesApiClient;
         private readonly IPropertyApiClient _propertyApiClient;
         private readonly IOwnershipApiClient _ownershipApiClient;
 
         public ClientsController(IClientsApiClient clientsApiClient,
-                                 ICurrencyApiClient currencyApiClient,
-                                 IFinancialRecordSubtypesApiClient subtypesApiClient,
                                  IPropertyApiClient propertyApiClient,
                                  IOwnershipApiClient ownershipApiClient)
         {
             _clientsApiClient = clientsApiClient;
-            _currencyApiClient = currencyApiClient;
-            _subtypesApiClient = subtypesApiClient;
             _propertyApiClient = propertyApiClient;
             _ownershipApiClient = ownershipApiClient;
         }
@@ -355,210 +348,6 @@ namespace PropertyManager.WEB.Controllers
         {
             await _clientsApiClient.RemoveRentedUnitAsync(clientId, unitId);
             return RedirectToAction(nameof(RentedUnits), new { id = clientId });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> UnitFinancialRecords(int clientId, int unitId, int? subtypeId)
-        {
-            var client = await _clientsApiClient.GetByIdAsync(clientId);
-            if (client == null)
-                return NotFound();
-
-            var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(clientId);
-            var unit = rentedUnits.FirstOrDefault(u => u.UnitId == unitId);
-            if (unit == null)
-                return NotFound();
-
-            var records = await _clientsApiClient.GetFinancialRecordsAsync(clientId, unitId, subtypeId);
-
-            var model = new UnitFinancialRecordsViewModel
-            {
-                ClientId = clientId,
-                ClientDisplayName = GetDisplayName(client),
-                UnitId = unitId,
-                UnitName = unit.Name,
-                UnitAddress = unit.Address,
-                UnitNumber = unit.UnitNumber,
-                SelectedSubtypeId = subtypeId,
-                FinancialRecord = new UnitFinancialRecordFormViewModel
-                {
-                    ClientId = clientId,
-                    UnitId = unitId,
-                    Date = DateTime.Today,
-                    FilterSubtypeId = subtypeId
-                },
-                Records = records
-            };
-            await model.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient, _clientsApiClient);
-            return View(model);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddFinancialRecord(
-            [Bind(Prefix = nameof(UnitFinancialRecordsViewModel.FinancialRecord))] UnitFinancialRecordFormViewModel record)
-        {
-            if (!ModelState.IsValid)
-            {
-                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
-            }
-            var dto = new CreateUnitFinancialRecordDto
-            {
-                UnitId = record.UnitId,
-                Type = record.Type,
-                SubtypeId = record.SubtypeId ?? 0,
-                Date = record.Date,
-                Amount = record.Amount,
-                CurrencyId = record.CurrencyId,
-                ContractorClientId = record.ContractorClientId,
-                Comment = record.Comment
-            };
-
-            try
-            {
-                await _clientsApiClient.CreateFinancialRecordAsync(record.ClientId, dto);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("", ex.Message);
-                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
-            }
-            catch
-            {
-                ModelState.AddModelError("", "Error creating financial record.");
-                return View("UnitFinancialRecords", await RebuildFinancialRecordsViewModelAsync(record));
-            }
-
-            return RedirectToAction(nameof(UnitFinancialRecords), new
-            {
-                clientId = record.ClientId,
-                unitId = record.UnitId,
-                subtypeId = record.FilterSubtypeId
-            });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> EditFinancialRecord(int clientId, int unitId, int id, int? subtypeId)
-        {
-            var record = await _clientsApiClient.GetFinancialRecordByIdAsync(clientId, unitId, id);
-            if (record == null)
-                return NotFound();
-
-            var model = new UnitFinancialRecordFormViewModel
-            {
-                Id = record.Id,
-                ClientId = clientId,
-                UnitId = unitId,
-                Type = record.Type,
-                SubtypeId = record.SubtypeId,
-                Date = record.Date,
-                Amount = record.Amount,
-                CurrencyId = record.CurrencyId,
-                ContractorClientId = record.ContractorClientId,
-                Comment = record.Comment,
-                FilterSubtypeId = subtypeId
-            };
-
-            await LoadFinancialRecordLookupsAsync(model);
-
-            return View(model);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditFinancialRecord(UnitFinancialRecordFormViewModel model)
-        {
-            if (!ModelState.IsValid)
-            {
-                await LoadFinancialRecordLookupsAsync(model);
-                return View(model);
-            }
-
-            var dto = new EditUnitFinancialRecordDto
-            {
-                Id = model.Id,
-                UnitId = model.UnitId,
-                Type = model.Type,
-                SubtypeId = model.SubtypeId ?? 0,
-                Date = model.Date,
-                Amount = model.Amount,
-                CurrencyId = model.CurrencyId,
-                ContractorClientId = model.ContractorClientId,
-                Comment = model.Comment
-            };
-
-            try
-            {
-                var response = await _clientsApiClient.UpdateFinancialRecordAsync(model.ClientId, model.UnitId, dto);
-                if (!response.IsSuccessStatusCode)
-                {
-                    ModelState.AddModelError("", "Error updating financial record.");
-                    await LoadFinancialRecordLookupsAsync(model);
-                    return View(model);
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError("", ex.Message);
-                await LoadFinancialRecordLookupsAsync(model);
-                return View(model);
-            }
-            catch
-            {
-                ModelState.AddModelError("", "Error updating financial record.");
-                await LoadFinancialRecordLookupsAsync(model);
-                return View(model);
-            }
-
-            return RedirectToAction(nameof(UnitFinancialRecords), new
-            {
-                clientId = model.ClientId,
-                unitId = model.UnitId,
-                subtypeId = model.FilterSubtypeId
-            });
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteFinancialRecord(int clientId, int unitId, int id, int? subtypeId)
-        {
-            try
-            {
-                await _clientsApiClient.DeleteFinancialRecordAsync(clientId, unitId, id);
-            }
-            catch
-            {
-                return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId, subtypeId });
-            }
-
-            return RedirectToAction(nameof(UnitFinancialRecords), new { clientId, unitId, subtypeId });
-        }
-
-        private async Task LoadFinancialRecordLookupsAsync(UnitFinancialRecordFormViewModel model)
-        {
-            await model.LoadActiveCurrenciesAsync(_currencyApiClient);
-            await model.LoadSubtypesAsync(_subtypesApiClient);
-            await model.LoadContractorsAsync(_clientsApiClient);
-        }
-
-        private async Task<UnitFinancialRecordsViewModel> RebuildFinancialRecordsViewModelAsync(UnitFinancialRecordFormViewModel model)
-        {
-            var client = await _clientsApiClient.GetByIdAsync(model.ClientId);
-            var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(model.ClientId);
-            var unit = rentedUnits.First(u => u.UnitId == model.UnitId);
-            var records = await _clientsApiClient.GetFinancialRecordsAsync(
-                model.ClientId, model.UnitId, model.FilterSubtypeId);
-
-            var vm = new UnitFinancialRecordsViewModel
-            {
-                ClientId = model.ClientId,
-                ClientDisplayName = client == null ? string.Empty : GetDisplayName(client),
-                UnitId = model.UnitId,
-                UnitName = unit.Name,
-                UnitAddress = unit.Address,
-                SelectedSubtypeId = model.FilterSubtypeId,
-                FinancialRecord = model,
-                Records = records
-            };
-            await vm.LoadLookupsAsync(_currencyApiClient, _subtypesApiClient, _clientsApiClient);
-            return vm;
         }
 
         private static CreateClientDto MapToCreateDto(ClientFormViewModel model) => new()
