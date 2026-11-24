@@ -129,13 +129,37 @@ namespace PropertyManager.API.Controllers
         }
 
         [HttpPost("{id}/units/{unitId}")]
-        public async Task<IActionResult> AddRentedUnit(int id, int unitId)
+        public async Task<IActionResult> AddRentedUnit(int id, int unitId, [FromBody] AddRentedUnitDto? dto)
         {
             if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
                 return NotFound();
 
-            await _clientsService.AddRentedUnitAsync(id, unitId);
-            return NoContent();
+            try
+            {
+                await _clientsService.AddRentedUnitAsync(id, unitId, dto?.LeaseId, dto?.StartDate);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/leases/{leaseId}")]
+        public async Task<IActionResult> UpdateLeaseStartDate(int id, int leaseId, [FromBody] UpdateLeaseStartDateDto dto)
+        {
+            if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
+                return NotFound();
+
+            try
+            {
+                await _clientsService.UpdateLeaseStartDateAsync(id, leaseId, dto.StartDate);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}/units/{unitId}")]
@@ -144,8 +168,15 @@ namespace PropertyManager.API.Controllers
             if (await _clientsService.GetByIdAsync(id, CurrentAccess()) == null)
                 return NotFound();
 
-            await _clientsService.RemoveRentedUnitAsync(id, unitId);
-            return NoContent();
+            try
+            {
+                await _clientsService.RemoveRentedUnitAsync(id, unitId);
+                return NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         private IReadOnlyList<ClientRoleType> CurrentAccess() => ClientAccess.Resolve(User);

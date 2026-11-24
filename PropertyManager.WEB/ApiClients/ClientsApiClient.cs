@@ -111,10 +111,10 @@ namespace PropertyManager.WEB.ApiClients
             return "Request failed.";
         }
 
-        public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)
+        public async Task<IReadOnlyList<ClientLeaseDto>> GetRentedUnitsAsync(int clientId)
         {
-            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientRentedUnitDto>>($"{api}/{clientId}/units");
-            return result ?? Array.Empty<ClientRentedUnitDto>();
+            var result = await _httpClient.GetFromJsonAsync<IReadOnlyList<ClientLeaseDto>>($"{api}/{clientId}/units");
+            return result ?? Array.Empty<ClientLeaseDto>();
         }
 
         public async Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync()
@@ -129,16 +129,26 @@ namespace PropertyManager.WEB.ApiClients
             return result ?? Array.Empty<UnitListItemDto>();
         }
 
-        public async Task AddRentedUnitAsync(int clientId, int unitId)
+        public async Task AddRentedUnitAsync(int clientId, int unitId, int? leaseId, DateTime? startDate)
         {
-            var response = await _httpClient.PostAsync($"{api}/{clientId}/units/{unitId}", content: null);
-            response.EnsureSuccessStatusCode();
+            var response = await _httpClient.PostAsJsonAsync(
+                $"{api}/{clientId}/units/{unitId}",
+                new AddRentedUnitDto { LeaseId = leaseId, StartDate = startDate });
+            await EnsureSuccessAsync(response);
+        }
+
+        public async Task UpdateLeaseStartDateAsync(int clientId, int leaseId, DateTime startDate)
+        {
+            var response = await _httpClient.PutAsJsonAsync(
+                $"{api}/{clientId}/leases/{leaseId}",
+                new UpdateLeaseStartDateDto { StartDate = startDate });
+            await EnsureSuccessAsync(response);
         }
 
         public async Task RemoveRentedUnitAsync(int clientId, int unitId)
         {
             var response = await _httpClient.DeleteAsync($"{api}/{clientId}/units/{unitId}");
-            response.EnsureSuccessStatusCode();
+            await EnsureSuccessAsync(response);
         }
     }
 }

@@ -34,7 +34,7 @@ namespace PropertyManager.WEB.Controllers
                 return NotFound();
 
             var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(clientId);
-            var unit = rentedUnits.FirstOrDefault(u => u.UnitId == unitId);
+            var unit = rentedUnits.SelectMany(lease => lease.Units).FirstOrDefault(u => u.UnitId == unitId);
             if (unit == null)
                 return NotFound();
 
@@ -212,7 +212,7 @@ namespace PropertyManager.WEB.Controllers
         {
             var client = await _clientsApiClient.GetByIdAsync(model.ClientId);
             var rentedUnits = await _clientsApiClient.GetRentedUnitsAsync(model.ClientId);
-            var unit = rentedUnits.First(u => u.UnitId == model.UnitId);
+            var unit = rentedUnits.SelectMany(lease => lease.Units).First(u => u.UnitId == model.UnitId);
             var records = await _financialRecordsApiClient.GetFinancialRecordsAsync(
                 model.ClientId, model.UnitId, model.FilterSubtypeId);
 

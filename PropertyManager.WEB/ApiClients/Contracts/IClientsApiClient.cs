@@ -11,10 +11,11 @@ namespace PropertyManager.WEB.ApiClients.Contracts
         Task<HttpResponseMessage> UpdateAsync(EditClientDto dto);
         Task DeleteAsync(int id);
         Task DeactivateAsync(int id);
-        Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId);
+        Task<IReadOnlyList<ClientLeaseDto>> GetRentedUnitsAsync(int clientId);
         Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync();
         Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId);
-        Task AddRentedUnitAsync(int clientId, int unitId);
+        Task AddRentedUnitAsync(int clientId, int unitId, int? leaseId, DateTime? startDate);
+        Task UpdateLeaseStartDateAsync(int clientId, int leaseId, DateTime startDate);
         Task RemoveRentedUnitAsync(int clientId, int unitId);
     }
 }

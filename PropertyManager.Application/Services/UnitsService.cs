@@ -107,8 +107,8 @@ namespace PropertyManager.Application.Services
         public async Task DeleteAsync(int id)
         {
             // ✅ Проверка за съществуващи и активни договори за наем
-            var hasLeases = await _context.Leases
-                .AnyAsync(l => l.UnitId == id);
+            var hasLeases = await _context.LeaseUnits
+                .AnyAsync(lu => lu.UnitId == id);
 
             if (hasLeases)
                 throw new InvalidOperationException(

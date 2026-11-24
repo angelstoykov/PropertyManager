@@ -330,9 +330,32 @@ namespace PropertyManager.WEB.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddRentedUnit(int clientId, int unitId)
+        public async Task<IActionResult> AddRentedUnit(int clientId, int unitId, int? leaseId, DateTime? startDate)
         {
-            await _clientsApiClient.AddRentedUnitAsync(clientId, unitId);
+            try
+            {
+                await _clientsApiClient.AddRentedUnitAsync(clientId, unitId, leaseId, startDate);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction(nameof(RentedUnits), new { id = clientId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateLeaseStartDate(int clientId, int leaseId, DateTime startDate)
+        {
+            try
+            {
+                await _clientsApiClient.UpdateLeaseStartDateAsync(clientId, leaseId, startDate);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
             return RedirectToAction(nameof(RentedUnits), new { id = clientId });
         }
 
@@ -346,7 +369,15 @@ namespace PropertyManager.WEB.Controllers
         [HttpPost]
         public async Task<IActionResult> RemoveRentedUnit(int clientId, int unitId)
         {
-            await _clientsApiClient.RemoveRentedUnitAsync(clientId, unitId);
+            try
+            {
+                await _clientsApiClient.RemoveRentedUnitAsync(clientId, unitId);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
             return RedirectToAction(nameof(RentedUnits), new { id = clientId });
         }
 
@@ -426,7 +457,7 @@ namespace PropertyManager.WEB.Controllers
                 ClientType = client.ClientType,
                 ClientDisplayName = GetDisplayName(client),
                 Roles = client.Roles.Select(ClientRolePresentation.ToBadge).ToList(),
-                RentedUnits = rentedUnits,
+                Leases = rentedUnits,
                 AvailableProperties = availableProperties
             };
         }

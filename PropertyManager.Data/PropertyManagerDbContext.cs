@@ -44,10 +44,11 @@ namespace PropertyManager.Data
             {
                 entity.Property(l => l.MonthlyRent).HasColumnType("decimal(18,2)");
                 entity.Property(l => l.DepositAmount).HasColumnType("decimal(18,2)");
+                entity.Property(l => l.StartDate).HasColumnType("date");
 
-                entity.HasOne(l => l.Unit)
-                    .WithMany(u => u.Leases)
-                    .HasForeignKey(l => l.UnitId)
+                entity.HasOne(l => l.Client)
+                    .WithMany(c => c.Leases)
+                    .HasForeignKey(l => l.ClientId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -73,10 +74,27 @@ namespace PropertyManager.Data
                 entity.Property(l => l.DepositAmount)
                       .HasColumnType("decimal(18,2)");
 
-                entity.HasOne(l => l.Unit)
-                      .WithMany(u => u.Leases)
-                      .HasForeignKey(l => l.UnitId)
+                entity.Property(l => l.StartDate).HasColumnType("date");
+
+                entity.HasOne(l => l.Client)
+                      .WithMany(c => c.Leases)
+                      .HasForeignKey(l => l.ClientId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<LeaseUnit>(entity =>
+            {
+                entity.HasKey(lu => new { lu.LeaseId, lu.UnitId });
+
+                entity.HasOne(lu => lu.Lease)
+                    .WithMany(l => l.Units)
+                    .HasForeignKey(lu => lu.LeaseId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(lu => lu.Unit)
+                    .WithMany(u => u.LeaseUnits)
+                    .HasForeignKey(lu => lu.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ----------------------------
@@ -270,6 +288,7 @@ namespace PropertyManager.Data
         public DbSet<Property> Properties => Set<Property>();
         public DbSet<Unit> Units => Set<Unit>();
         public DbSet<Lease> Leases => Set<Lease>();
+        public DbSet<LeaseUnit> LeaseUnits => Set<LeaseUnit>();
         public DbSet<RentPayment> RentPayments => Set<RentPayment>();
         public DbSet<Client> Clients => Set<Client>();
         public DbSet<ClientRole> ClientRoles => Set<ClientRole>();

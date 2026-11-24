@@ -59,7 +59,7 @@ namespace PropertyManager.Application.Services
                     Email = c.Email,
                     Phone = c.Phone,
                     IsActive = c.IsActive,
-                    HasLinkedRecords = c.ClientUnits.Any() || c.ContractorExpenses.Any() || c.OwnershipRecords.Any(),
+                    HasLinkedRecords = c.ClientUnits.Any() || c.Leases.Any() || c.ContractorExpenses.Any() || c.OwnershipRecords.Any(),
                     Roles = c.Roles
                         .Where(r => allowed.Contains(r.Role))
                         .Select(r => new ClientRoleDto
@@ -133,6 +133,7 @@ namespace PropertyManager.Application.Services
                 .Include(c => c.Roles)
                 .Include(c => c.ContractorExpenses)
                 .Include(c => c.OwnershipRecords)
+                .Include(c => c.Leases)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (client == null || !IsVisible(client, allowed))
@@ -187,8 +188,10 @@ namespace PropertyManager.Application.Services
                 .AnyAsync(r => r.ContractorClientId == id);
             var hasOwnership = await _context.OwnershipRecords
                 .AnyAsync(o => o.ClientId == id);
+            var hasLeases = await _context.Leases
+                .AnyAsync(l => l.ClientId == id);
 
-            if (client.ClientUnits.Count > 0 || hasContractorExpenses || hasOwnership)
+            if (client.ClientUnits.Count > 0 || hasContractorExpenses || hasOwnership || hasLeases)
                 throw new InvalidOperationException(
                     "This client is linked to records and can only be deactivated.");
 
@@ -227,24 +230,43 @@ namespace PropertyManager.Application.Services
                 existing.IsActive = true;
         }
 
-        public async Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId)
+        public async Task<IReadOnlyList<ClientLeaseDto>> GetRentedUnitsAsync(int clientId)
         {
             var clientExists = await _context.Clients.AnyAsync(c => c.Id == clientId);
             if (!clientExists)
                 throw new InvalidOperationException("Client not found.");
 
-            return await _context.Clients
+            var leases = await _context.Leases
                 .AsNoTracking()
-                .Where(c => c.Id == clientId)
-                .SelectMany(c => c.ClientUnits.Select(cu => cu.Unit))
-                .Select(p => new ClientRentedUnitDto
+                .Where(l => l.ClientId == clientId && l.Status == LeaseStatus.Active)
+                .Select(l => new ClientLeaseDto
                 {
-                    UnitId = p.Id,
-                    Name = p.Property.Name,
-                    Address = p.Property.Address,
-                    UnitNumber = p.UnitNumber
+                    LeaseId = l.Id,
+                    StartDate = l.StartDate,
+                    Units = l.Units
+                        .Select(lu => new ClientRentedUnitDto
+                        {
+                            UnitId = lu.UnitId,
+                            Name = lu.Unit.Property.Name,
+                            Address = lu.Unit.Property.Address,
+                            UnitNumber = lu.Unit.UnitNumber
+                        })
+                        .ToList()
                 })
                 .ToListAsync();
+
+            return leases
+                .OrderBy(l => l.StartDate)
+                .ThenBy(l => l.LeaseId)
+                .Select(l =>
+                {
+                    l.Units = l.Units
+                        .OrderBy(u => u.Address, StringComparer.CurrentCultureIgnoreCase)
+                        .ThenBy(u => u.UnitNumber, StringComparer.CurrentCultureIgnoreCase)
+                        .ToList();
+                    return l;
+                })
+                .ToList();
         }
 
         public async Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync()
@@ -284,7 +306,7 @@ namespace PropertyManager.Application.Services
                 .ToListAsync();
         }
 
-        public async Task AddRentedUnitAsync(int clientId, int unitId)
+        public async Task AddRentedUnitAsync(int clientId, int unitId, int? leaseId, DateTime? startDate)
         {
             var client = await _context.Clients
                 .Include(c => c.ClientUnits)
@@ -297,14 +319,59 @@ namespace PropertyManager.Application.Services
             if (unit == null)
                 throw new InvalidOperationException("Unit not found.");
 
-            var isAlreadyAdded = client.ClientUnits.Any(cu => cu.UnitId == unitId);
-            if (!isAlreadyAdded)
+            var onActiveLease = await _context.LeaseUnits
+                .AnyAsync(lu => lu.UnitId == unitId && lu.Lease.Status == LeaseStatus.Active);
+            if (onActiveLease)
+                throw new InvalidOperationException("Unit is already on an active contract.");
+
+            if (client.ClientUnits.Any(cu => cu.UnitId == unitId))
+                throw new InvalidOperationException("Unit is already linked to this client.");
+
+            var linkedToAnotherClient = await _context.Set<ClientUnit>()
+                .AnyAsync(cu => cu.UnitId == unitId);
+            if (linkedToAnotherClient)
+                throw new InvalidOperationException("Unit is already linked to a client.");
+
+            Lease lease;
+            if (leaseId is int existingLeaseId)
             {
-                client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
-                unit.Status = UnitStatus.Occupied;
+                lease = await _context.Leases
+                    .FirstOrDefaultAsync(l =>
+                        l.Id == existingLeaseId &&
+                        l.ClientId == clientId &&
+                        l.Status == LeaseStatus.Active)
+                    ?? throw new InvalidOperationException("Contract not found.");
+            }
+            else
+            {
+                lease = new Lease
+                {
+                    ClientId = clientId,
+                    StartDate = (startDate ?? DateTime.Today).Date,
+                    MonthlyRent = 0,
+                    DepositAmount = 0,
+                    Status = LeaseStatus.Active
+                };
+                _context.Leases.Add(lease);
             }
 
+            _context.LeaseUnits.Add(new LeaseUnit { Lease = lease, UnitId = unitId });
+            client.ClientUnits.Add(new ClientUnit { ClientId = clientId, UnitId = unitId });
+            unit.Status = UnitStatus.Occupied;
+
             await EnsureRoleAsync(clientId, ClientRoleType.Tenant);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateLeaseStartDateAsync(int clientId, int leaseId, DateTime startDate)
+        {
+            var lease = await _context.Leases
+                .FirstOrDefaultAsync(l => l.Id == leaseId && l.ClientId == clientId);
+
+            if (lease == null)
+                throw new InvalidOperationException("Contract not found.");
+
+            lease.StartDate = startDate.Date;
             await _context.SaveChangesAsync();
         }
 
@@ -312,17 +379,38 @@ namespace PropertyManager.Application.Services
         {
             var client = await _context.Clients
                 .Include(c => c.ClientUnits)
-                .ThenInclude(cu => cu.Unit)
                 .FirstOrDefaultAsync(c => c.Id == clientId);
 
             if (client == null)
                 throw new InvalidOperationException("Client not found.");
 
-            var unit = client.ClientUnits.FirstOrDefault(cu => cu.UnitId == unitId);
-            if (unit == null)
+            var clientUnit = client.ClientUnits.FirstOrDefault(cu => cu.UnitId == unitId);
+            if (clientUnit == null)
                 return;
 
-            client.ClientUnits.Remove(unit);
+            client.ClientUnits.Remove(clientUnit);
+
+            var leaseUnit = await _context.LeaseUnits
+                .Include(lu => lu.Lease)
+                .FirstOrDefaultAsync(lu =>
+                    lu.UnitId == unitId &&
+                    lu.Lease.ClientId == clientId &&
+                    lu.Lease.Status == LeaseStatus.Active);
+
+            if (leaseUnit != null)
+            {
+                var remaining = await _context.LeaseUnits
+                    .CountAsync(lu => lu.LeaseId == leaseUnit.LeaseId && lu.UnitId != unitId);
+
+                _context.LeaseUnits.Remove(leaseUnit);
+
+                if (remaining == 0)
+                {
+                    leaseUnit.Lease.Status = LeaseStatus.Terminated;
+                    leaseUnit.Lease.EndDate = DateTime.Today;
+                }
+            }
+
             await _context.SaveChangesAsync();
         }
 
@@ -611,6 +699,7 @@ namespace PropertyManager.Application.Services
             Notes = client.Notes,
             IsActive = client.IsActive,
             HasLinkedRecords = client.ClientUnits.Count > 0
+                || client.Leases.Count > 0
                 || client.ContractorExpenses.Count > 0
                 || client.OwnershipRecords.Count > 0,
             Roles = client.Roles

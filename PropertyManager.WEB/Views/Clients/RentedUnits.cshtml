@@ -11,9 +11,14 @@
     <span class="ms-2"><partial name="_RoleBadges" model="Model.Roles" /></span>
 </div>
 
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger">@error</div>
+}
+
 <form asp-action="AddRentedUnit" method="post" class="row g-2 align-items-end mb-4" id="addRentedUnitForm">
     <input type="hidden" name="clientId" value="@Model.ClientId" />
-    <div class="col-md-4">
+    <div class="col-md-3">
         <label class="form-label" for="propertySelect">Property</label>
         <select id="propertySelect" class="form-select" required>
             <option value="">-- Select property --</option>
@@ -23,14 +28,29 @@
             }
         </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <label class="form-label" for="unitSelect">Unit</label>
         <select id="unitSelect" name="unitId" class="form-select" required disabled>
             <option value="">-- Select unit --</option>
         </select>
     </div>
-    <div class="col-md-4">
-        <button type="submit" class="btn btn-primary">Add Unit</button>
+    <div class="col-md-3">
+        <label class="form-label" for="leaseSelect">Contract</label>
+        <select id="leaseSelect" name="leaseId" class="form-select">
+            <option value="">New contract</option>
+            @foreach (var lease in Model.Leases)
+            {
+                var unitLabel = lease.Units.Count == 1 ? "1 unit" : $"{lease.Units.Count} units";
+                <option value="@lease.LeaseId">Contract from @lease.StartDate.ToString("yyyy-MM-dd") — @unitLabel</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2" id="leaseStartGroup">
+        <label class="form-label" for="leaseStartDate">Lease start</label>
+        <input id="leaseStartDate" type="date" name="startDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" class="form-control" required />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-primary">Add</button>
     </div>
 </form>
 
@@ -43,7 +63,7 @@
         </tr>
     </thead>
     <tbody>
-        @if (!Model.RentedUnits.Any())
+        @if (!Model.Leases.Any())
         {
             <tr>
                 <td colspan="3" class="text-muted">No rented units linked yet.</td>
@@ -51,24 +71,44 @@
         }
         else
         {
-            @foreach (var property in Model.RentedUnits)
+            @foreach (var lease in Model.Leases)
             {
-                <tr>
-                    <td>@property.Address</td>
-                    <td>@property.UnitNumber</td>
-                    <td>
-                        <a asp-controller="FinancialRecords"
-                           asp-action="Index"
-                           asp-route-clientId="@Model.ClientId"
-                           asp-route-unitId="@property.UnitId"
-                           class="btn btn-sm btn-info me-1">Financial Records</a>
-                        <form asp-action="RemoveRentedUnit" method="post" class="d-inline">
+                <tr class="table-light">
+                    <td colspan="3">
+                        <form asp-action="UpdateLeaseStartDate" method="post" class="row g-2 align-items-center">
                             <input type="hidden" name="clientId" value="@Model.ClientId" />
-                            <input type="hidden" name="unitId" value="@property.UnitId" />
-                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            <input type="hidden" name="leaseId" value="@lease.LeaseId" />
+                            <div class="col-auto">
+                                <label class="col-form-label" for="leaseStart-@lease.LeaseId">Lease start</label>
+                            </div>
+                            <div class="col-auto">
+                                <input id="leaseStart-@lease.LeaseId" type="date" name="startDate" value="@lease.StartDate.ToString("yyyy-MM-dd")" class="form-control" required />
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                            </div>
                         </form>
                     </td>
                 </tr>
+                @foreach (var unit in lease.Units)
+                {
+                    <tr>
+                        <td>@unit.Address</td>
+                        <td>@unit.UnitNumber</td>
+                        <td>
+                            <a asp-controller="FinancialRecords"
+                               asp-action="Index"
+                               asp-route-clientId="@Model.ClientId"
+                               asp-route-unitId="@unit.UnitId"
+                               class="btn btn-sm btn-info me-1">Financial Records</a>
+                            <form asp-action="RemoveRentedUnit" method="post" class="d-inline">
+                                <input type="hidden" name="clientId" value="@Model.ClientId" />
+                                <input type="hidden" name="unitId" value="@unit.UnitId" />
+                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
             }
         }
     </tbody>

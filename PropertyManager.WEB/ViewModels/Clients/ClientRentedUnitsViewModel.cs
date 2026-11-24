@@ -11,7 +11,7 @@ namespace PropertyManager.WEB.ViewModels.Clients
         public ClientType ClientType { get; set; }
         public int? PropertyIdToAdd { get; set; }
         public IReadOnlyList<ClientRoleBadgeViewModel> Roles { get; set; } = [];
-        public IReadOnlyList<ClientRentedUnitDto> RentedUnits { get; set; } = Array.Empty<ClientRentedUnitDto>();
+        public IReadOnlyList<ClientLeaseDto> Leases { get; set; } = [];
         public IReadOnlyList<PropertyListItemDto> AvailableProperties { get; set; } = Array.Empty<PropertyListItemDto>();
     }
 }

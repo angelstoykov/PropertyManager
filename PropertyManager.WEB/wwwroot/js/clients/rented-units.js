@@ -14,6 +14,25 @@
         unitSelect.disabled = true;
     }
 
+    const leaseSelect = document.getElementById('leaseSelect');
+    const leaseStartGroup = document.getElementById('leaseStartGroup');
+    const leaseStartDate = document.getElementById('leaseStartDate');
+
+    function syncLeaseStart() {
+        if (!leaseSelect || !leaseStartGroup || !leaseStartDate) {
+            return;
+        }
+
+        const isNewContract = leaseSelect.value === '';
+        leaseStartGroup.hidden = !isNewContract;
+        leaseStartDate.required = isNewContract;
+    }
+
+    if (leaseSelect) {
+        leaseSelect.addEventListener('change', syncLeaseStart);
+        syncLeaseStart();
+    }
+
     propertySelect.addEventListener('change', async function () {
         const propertyId = propertySelect.value;
 

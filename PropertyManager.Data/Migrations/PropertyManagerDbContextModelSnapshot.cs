@@ -423,6 +423,9 @@ namespace PropertyManager.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("DepositAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -433,19 +436,31 @@ namespace PropertyManager.Data.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("date");
 
                     b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("Leases");
+                });
+
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.LeaseUnit", b =>
+                {
+                    b.Property<int>("LeaseId")
                         .HasColumnType("int");
 
                     b.Property<int>("UnitId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
+                    b.HasKey("LeaseId", "UnitId");
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Leases");
+                    b.ToTable("LeaseUnits");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.OwnershipRecord", b =>
@@ -787,11 +802,30 @@ namespace PropertyManager.Data.Migrations
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>
                 {
-                    b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Client", "Client")
                         .WithMany("Leases")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Client");
+                });
+
+            modelBuilder.Entity("PropertyManager.Domain.Models.Entities.LeaseUnit", b =>
+                {
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Lease", "Lease")
+                        .WithMany("Units")
+                        .HasForeignKey("LeaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PropertyManager.Domain.Models.Entities.Unit", "Unit")
+                        .WithMany("LeaseUnits")
                         .HasForeignKey("UnitId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Lease");
 
                     b.Navigation("Unit");
                 });
@@ -910,6 +944,8 @@ namespace PropertyManager.Data.Migrations
 
                     b.Navigation("ContractorExpenses");
 
+                    b.Navigation("Leases");
+
                     b.Navigation("OwnershipRecords");
 
                     b.Navigation("Roles");
@@ -923,6 +959,8 @@ namespace PropertyManager.Data.Migrations
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.Lease", b =>
                 {
                     b.Navigation("Payments");
+
+                    b.Navigation("Units");
                 });
 
             modelBuilder.Entity("PropertyManager.Domain.Models.Entities.PriceComponent", b =>
@@ -941,7 +979,7 @@ namespace PropertyManager.Data.Migrations
 
                     b.Navigation("FinancialRecords");
 
-                    b.Navigation("Leases");
+                    b.Navigation("LeaseUnits");
 
                     b.Navigation("PriceComponents");
                 });

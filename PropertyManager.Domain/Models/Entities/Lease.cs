@@ -7,8 +7,8 @@ namespace PropertyManager.Domain.Models.Entities
     {
         public int Id { get; set; }
 
-        public int UnitId { get; set; }
-        public Unit Unit { get; set; } = null!;
+        public int ClientId { get; set; }
+        public Client Client { get; set; } = null!;
 
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
@@ -18,6 +18,8 @@ namespace PropertyManager.Domain.Models.Entities
 
         [Required]
         public LeaseStatus Status { get; set; }
+
+        public ICollection<LeaseUnit> Units { get; set; } = new List<LeaseUnit>();
         public ICollection<RentPayment> Payments { get; set; } = new List<RentPayment>();
     }
 }

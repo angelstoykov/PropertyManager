@@ -26,7 +26,7 @@ namespace PropertyManager.Domain.Models.Entities
 
         public UnitStatus Status { get; set; }
 
-        public ICollection<Lease> Leases { get; set; } = new List<Lease>();
+        public ICollection<LeaseUnit> LeaseUnits { get; set; } = new List<LeaseUnit>();
         public IList<ClientUnit> ClientUnits { get; set; } = new List<ClientUnit>();
         public ICollection<UnitFinancialRecord> FinancialRecords { get; set; } = new List<UnitFinancialRecord>();
         public ICollection<UnitPriceComponent> PriceComponents { get; set; } = new List<UnitPriceComponent>();

@@ -31,5 +31,6 @@ namespace PropertyManager.Domain.Models.Entities
         public ICollection<ClientRole> Roles { get; set; } = new List<ClientRole>();
         public ICollection<UnitFinancialRecord> ContractorExpenses { get; set; } = new List<UnitFinancialRecord>();
         public ICollection<OwnershipRecord> OwnershipRecords { get; set; } = new List<OwnershipRecord>();
+        public ICollection<Lease> Leases { get; set; } = new List<Lease>();
     }
 }

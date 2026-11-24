@@ -13,10 +13,11 @@ namespace PropertyManager.Application.Services.Contracts
         Task DeleteAsync(int id);
         Task DeactivateAsync(int id);
         Task EnsureRoleAsync(int clientId, ClientRoleType role, DateTime? startDate = null);
-        Task<IReadOnlyList<ClientRentedUnitDto>> GetRentedUnitsAsync(int clientId);
+        Task<IReadOnlyList<ClientLeaseDto>> GetRentedUnitsAsync(int clientId);
         Task<IReadOnlyList<PropertyListItemDto>> GetAvailablePropertiesAsync();
         Task<IReadOnlyList<UnitListItemDto>> GetAvailableUnitsByPropertyIdAsync(int propertyId);
-        Task AddRentedUnitAsync(int clientId, int unitId);
+        Task AddRentedUnitAsync(int clientId, int unitId, int? leaseId, DateTime? startDate);
+        Task UpdateLeaseStartDateAsync(int clientId, int leaseId, DateTime startDate);
         Task RemoveRentedUnitAsync(int clientId, int unitId);
     }
 }
