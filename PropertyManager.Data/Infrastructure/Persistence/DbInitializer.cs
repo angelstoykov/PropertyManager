@@ -11,10 +11,6 @@ namespace PropertyManager.Data.Infrastructure.Persistence
             // Автоматично прилага миграции
             await context.Database.MigrateAsync();
 
-            // Проверява за записи. Ако липсват хвърля грешка.
-            if (!context.Properties.Any())
-                throw new Exception("There is no properties in the DB.");
-
             if (!context.Currencies.Any())
             {
                 var currency = new Currency
