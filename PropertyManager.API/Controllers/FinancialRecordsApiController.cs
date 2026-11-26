@@ -136,6 +136,22 @@ namespace PropertyManager.API.Controllers
             return Ok(totals);
         }
 
+        [HttpGet("unit-income")]
+        public async Task<IActionResult> GetUnitIncome(
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate,
+            [FromQuery] List<int>? propertyIds)
+        {
+            if (startDate == default || endDate == default)
+                return BadRequest(new { message = "Start date and end date are required." });
+
+            if (endDate.Date < startDate.Date)
+                return BadRequest(new { message = "End date cannot be before start date." });
+
+            var totals = await _financialRecordsService.GetUnitIncomeTotalsAsync(startDate, endDate, propertyIds);
+            return Ok(totals);
+        }
+
         private IReadOnlyList<ClientRoleType> CurrentAccess() => ClientAccess.Resolve(User);
     }
 }

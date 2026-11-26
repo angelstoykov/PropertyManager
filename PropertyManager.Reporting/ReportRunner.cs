@@ -41,6 +41,18 @@ public class ReportRunner
         if (errors.Count > 0 || request.StartDate == null || request.EndDate == null)
             throw new ReportValidationException(errors);
 
+        if (string.Equals(report.DataSourceKey, ReportDataSources.InvoicingRevenue, StringComparison.Ordinal))
+        {
+            return await BuildInvoicingResultAsync(
+                report,
+                request,
+                parameters,
+                buildings,
+                request.StartDate.Value,
+                request.EndDate.Value,
+                cancellationToken);
+        }
+
         var facts = await LoadFactsAsync(
             report,
             parameters,
@@ -191,6 +203,144 @@ public class ReportRunner
             buildings.Select(building => building.Id).ToList(),
             financeType,
             cancellationToken);
+    }
+
+    private async Task<ReportRunResult> BuildInvoicingResultAsync(
+        ReportDefinition report,
+        ReportRunRequest request,
+        IReadOnlyDictionary<string, string> parameters,
+        IReadOnlyList<AccessibleBuilding> buildings,
+        DateTime startDate,
+        DateTime endDate,
+        CancellationToken cancellationToken)
+    {
+        var result = new ReportRunResult
+        {
+            Key = report.Key,
+            Name = report.Name,
+            Header = BuildHeader(report, request, parameters, buildings),
+            EmptyMessage = "No financial records match this period and building selection."
+        };
+
+        if (buildings.Count == 0)
+            return result;
+
+        var propertyIds = buildings.Select(building => building.Id).ToList();
+        var income = await _gateway.GetUnitIncomeAsync(startDate, endDate, propertyIds, cancellationToken);
+        var setup = await _gateway.GetUnitCommissionSetupAsync(propertyIds, cancellationToken);
+        var setupByUnit = setup.ToDictionary(
+            line => (line.UnitId, Code: line.CurrencyCode.ToUpperInvariant()),
+            line => line);
+
+        var lines = income
+            .Where(line => line.Amount != 0)
+            .Select(line =>
+            {
+                setupByUnit.TryGetValue((line.UnitId, line.CurrencyCode.ToUpperInvariant()), out var unitSetup);
+                return new InvoicingLine
+                {
+                    PropertyId = line.PropertyId,
+                    UnitNumber = string.IsNullOrWhiteSpace(line.UnitNumber) ? line.UnitId.ToString() : line.UnitNumber,
+                    CurrencyCode = line.CurrencyCode,
+                    CurrencySymbol = line.CurrencySymbol,
+                    Received = line.Amount,
+                    Invoiceable = InvoiceableAmount(line.Amount, line.IncomeCount, unitSetup?.ExcludedAmount ?? 0)
+                };
+            })
+            .ToList();
+
+        if (lines.Count == 0)
+            return result;
+
+        result.HasData = true;
+        result.EmptyMessage = null;
+        var columns = VisibleColumns(report, parameters);
+        var buildingNames = buildings.ToDictionary(building => building.Id, building => building.Name);
+
+        foreach (var currency in lines.GroupBy(line => line.CurrencyCode, StringComparer.OrdinalIgnoreCase)
+                     .OrderBy(group => group.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var rows = new List<Dictionary<string, ReportValue>>();
+            decimal receivedTotal = 0;
+            decimal invoiceableTotal = 0;
+
+            var byBuilding = currency
+                .GroupBy(line => line.PropertyId)
+                .OrderBy(group => buildingNames.GetValueOrDefault(group.Key) ?? "", StringComparer.OrdinalIgnoreCase);
+
+            foreach (var building in byBuilding)
+            {
+                var buildingName = buildingNames.GetValueOrDefault(building.Key) ?? "";
+                decimal buildingReceived = 0;
+                decimal buildingInvoiceable = 0;
+                foreach (var line in building.OrderBy(line => line.UnitNumber, StringComparer.OrdinalIgnoreCase))
+                {
+                    rows.Add(InvoicingRow(columns, buildingName, line.UnitNumber, line.Received, line.Invoiceable));
+                    buildingReceived += line.Received;
+                    buildingInvoiceable += line.Invoiceable;
+                }
+
+                rows.Add(InvoicingRow(columns, buildingName, "Total", buildingReceived, buildingInvoiceable));
+                receivedTotal += buildingReceived;
+                invoiceableTotal += buildingInvoiceable;
+            }
+
+            var sample = currency.First();
+            result.Tables.Add(new ReportTable
+            {
+                Title = CurrencyTitle(sample.CurrencyCode, sample.CurrencySymbol),
+                Columns = columns.Select(column => new ReportColumn
+                {
+                    Key = column.Key,
+                    Label = column.Label,
+                    Numeric = column.Numeric
+                }).ToList(),
+                Rows = rows,
+                Totals = InvoicingRow(columns, "Total", "", receivedTotal, invoiceableTotal)
+            });
+        }
+
+        return result;
+    }
+
+    private static decimal InvoiceableAmount(decimal received, int incomeCount, decimal excludedSetup)
+    {
+        var excluded = excludedSetup * incomeCount;
+        return Math.Round(received - excluded, 2, MidpointRounding.AwayFromZero);
+    }
+
+    private static Dictionary<string, ReportValue> InvoicingRow(
+        IReadOnlyList<ReportColumnDefinition> columns,
+        string buildingName,
+        string unitName,
+        decimal received,
+        decimal invoiceable)
+    {
+        var row = new Dictionary<string, ReportValue>(StringComparer.OrdinalIgnoreCase);
+        foreach (var column in columns)
+        {
+            if (!column.Numeric)
+            {
+                var text = column.Field == "unitName" ? unitName : buildingName;
+                row[column.Key] = new ReportValue { Text = text };
+                continue;
+            }
+
+            var amount = column.Field == "invoiceable" ? invoiceable : received;
+            row[column.Key] = new ReportValue { Amount = amount };
+        }
+
+        return row;
+    }
+
+    private sealed class InvoicingLine
+    {
+        public int PropertyId { get; set; }
+        public string UnitNumber { get; set; } = "";
+        public string CurrencyCode { get; set; } = "";
+        public string CurrencySymbol { get; set; } = "";
+        public decimal Received { get; set; }
+        public decimal Invoiceable { get; set; }
     }
 
     private static ReportRunResult BuildResult(

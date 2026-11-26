@@ -15,5 +15,9 @@ namespace PropertyManager.Application.Services.Contracts
             DateTime endDate,
             IReadOnlyCollection<int>? propertyIds,
             FinancialRecordType? type);
+        Task<IReadOnlyList<UnitIncomeTotalDto>> GetUnitIncomeTotalsAsync(
+            DateTime startDate,
+            DateTime endDate,
+            IReadOnlyCollection<int>? propertyIds);
     }
 }

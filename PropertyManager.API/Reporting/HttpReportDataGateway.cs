@@ -67,6 +67,61 @@ public class HttpReportDataGateway : IReportDataGateway
         }).ToList();
     }
 
+    public async Task<IReadOnlyList<UnitIncomeTotal>> GetUnitIncomeAsync(
+        DateTime startDate,
+        DateTime endDate,
+        IReadOnlyCollection<int> propertyIds,
+        CancellationToken cancellationToken = default)
+    {
+        var client = CreateClient();
+        var query = new List<string>
+        {
+            $"startDate={startDate:yyyy-MM-dd}",
+            $"endDate={endDate:yyyy-MM-dd}"
+        };
+        foreach (var id in propertyIds.Distinct())
+            query.Add($"propertyIds={id}");
+
+        var totals = await client.GetFromJsonAsync<List<UnitIncomeLine>>(
+            "api/financial-records/unit-income?" + string.Join("&", query),
+            JsonOptions,
+            cancellationToken) ?? new List<UnitIncomeLine>();
+
+        return totals.Select(line => new UnitIncomeTotal
+        {
+            PropertyId = line.PropertyId,
+            UnitId = line.UnitId,
+            UnitNumber = line.UnitNumber ?? "",
+            CurrencyCode = line.CurrencyCode ?? "",
+            CurrencySymbol = string.IsNullOrEmpty(line.CurrencySymbol) ? line.CurrencyCode ?? "" : line.CurrencySymbol,
+            Amount = line.Amount,
+            IncomeCount = line.IncomeCount
+        }).ToList();
+    }
+
+    public async Task<IReadOnlyList<UnitCommissionSetup>> GetUnitCommissionSetupAsync(
+        IReadOnlyCollection<int> propertyIds,
+        CancellationToken cancellationToken = default)
+    {
+        var client = CreateClient();
+        var query = propertyIds.Distinct().Select(id => $"propertyIds={id}");
+        var url = "api/unit-price-setup";
+        var joined = string.Join("&", query);
+        if (joined.Length > 0)
+            url += "?" + joined;
+
+        var lines = await client.GetFromJsonAsync<List<SetupLine>>(url, JsonOptions, cancellationToken)
+            ?? new List<SetupLine>();
+
+        return lines.Select(line => new UnitCommissionSetup
+        {
+            UnitId = line.UnitId,
+            CurrencyCode = line.CurrencyCode ?? "",
+            IncludedAmount = line.IncludedAmount,
+            ExcludedAmount = line.ExcludedAmount
+        }).ToList();
+    }
+
     private HttpClient CreateClient()
     {
         var httpContext = _httpContextAccessor.HttpContext
@@ -97,5 +152,24 @@ public class HttpReportDataGateway : IReportDataGateway
         public string? CurrencySymbol { get; set; }
         public decimal Income { get; set; }
         public decimal Expense { get; set; }
+    }
+
+    private sealed class UnitIncomeLine
+    {
+        public int PropertyId { get; set; }
+        public int UnitId { get; set; }
+        public string? UnitNumber { get; set; }
+        public string? CurrencyCode { get; set; }
+        public string? CurrencySymbol { get; set; }
+        public decimal Amount { get; set; }
+        public int IncomeCount { get; set; }
+    }
+
+    private sealed class SetupLine
+    {
+        public int UnitId { get; set; }
+        public string? CurrencyCode { get; set; }
+        public decimal IncludedAmount { get; set; }
+        public decimal ExcludedAmount { get; set; }
     }
 }

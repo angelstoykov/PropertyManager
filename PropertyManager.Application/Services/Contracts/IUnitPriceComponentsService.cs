@@ -9,5 +9,6 @@ namespace PropertyManager.Application.Services.Contracts
         Task<int> CreateAsync(CreateUnitPriceComponentDto dto);
         Task EditAsync(EditUnitPriceComponentDto dto);
         Task DeleteAsync(int unitId, int id);
+        Task<IReadOnlyList<UnitCommissionSetupDto>> GetCommissionSetupAsync(IReadOnlyCollection<int>? propertyIds);
     }
 }

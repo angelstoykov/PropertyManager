@@ -104,6 +104,44 @@ namespace PropertyManager.Application.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<IReadOnlyList<UnitCommissionSetupDto>> GetCommissionSetupAsync(IReadOnlyCollection<int>? propertyIds)
+        {
+            var query = _context.UnitPriceComponents.AsNoTracking();
+            if (propertyIds is { Count: > 0 })
+            {
+                var ids = propertyIds.Distinct().ToList();
+                query = query.Where(line => ids.Contains(line.Unit.PropertyId));
+            }
+
+            var grouped = await query
+                .Select(line => new
+                {
+                    line.UnitId,
+                    Code = line.Currency.Code,
+                    Included = line.PriceComponent.IncludeInCommission ? line.Amount : 0m,
+                    Excluded = line.PriceComponent.IncludeInCommission ? 0m : line.Amount
+                })
+                .GroupBy(line => new { line.UnitId, line.Code })
+                .Select(group => new
+                {
+                    group.Key.UnitId,
+                    group.Key.Code,
+                    Included = group.Sum(line => line.Included),
+                    Excluded = group.Sum(line => line.Excluded)
+                })
+                .ToListAsync();
+
+            return grouped
+                .Select(row => new UnitCommissionSetupDto
+                {
+                    UnitId = row.UnitId,
+                    CurrencyCode = row.Code,
+                    IncludedAmount = row.Included,
+                    ExcludedAmount = row.Excluded
+                })
+                .ToList();
+        }
+
         private async Task EnsureUnitExistsAsync(int unitId)
         {
             var exists = await _context.Units.AnyAsync(u => u.Id == unitId);

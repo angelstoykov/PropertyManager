@@ -17,6 +17,13 @@ namespace PropertyManager.API.Controllers
             _unitPriceComponentsService = unitPriceComponentsService;
         }
 
+        [HttpGet("/api/unit-price-setup")]
+        public async Task<IActionResult> GetSetup([FromQuery] List<int>? propertyIds)
+        {
+            var setup = await _unitPriceComponentsService.GetCommissionSetupAsync(propertyIds);
+            return Ok(setup);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetByUnit(int unitId)
         {

@@ -11,6 +11,7 @@ public static class ReportParameterKeys
 public static class ReportDataSources
 {
     public const string FinanceBuildingTotals = "finance.building-totals";
+    public const string InvoicingRevenue = "finance.unit-invoicing";
 }
 
 public class ReportParameterOption
