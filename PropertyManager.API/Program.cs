@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PropertyManager.API.Reporting;
 using PropertyManager.API.Services;
+using PropertyManager.Reporting;
 using PropertyManager.Application.Configuration;
 using PropertyManager.Application.Services;
 using PropertyManager.Application.Services.Contracts;
@@ -58,6 +60,12 @@ namespace PropertyManager.API
                 });
 
             builder.Services.AddAuthorization();
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddHttpClient(nameof(HttpReportDataGateway));
+            builder.Services.AddSingleton<ReportRegistry>();
+            builder.Services.AddScoped<IReportDataGateway, HttpReportDataGateway>();
+            builder.Services.AddScoped<ReportRunner>();
 
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();

@@ -48,6 +48,15 @@ namespace PropertyManager.WEB
                     .RequireAuthenticatedUser()
                     .Build();
                 options.Filters.Add(new AuthorizeFilter(policy));
+            })
+            .ConfigureApplicationPartManager(manager =>
+            {
+                // WEB references the API assembly, which would otherwise register its controllers here.
+                var apiParts = manager.ApplicationParts
+                    .Where(part => string.Equals(part.Name, "PropertyManager.API", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+                foreach (var part in apiParts)
+                    manager.ApplicationParts.Remove(part);
             });
 
             builder.Services.AddHttpContextAccessor();
@@ -84,6 +93,10 @@ namespace PropertyManager.WEB
                 .AddHttpMessageHandler<JwtBearerHandler>();
 
             builder.Services.AddHttpClient<IFinancialRecordsApiClient, FinancialRecordsApiClient>(client =>
+                    client.BaseAddress = new Uri(apiBaseUrl))
+                .AddHttpMessageHandler<JwtBearerHandler>();
+
+            builder.Services.AddHttpClient<IReportsApiClient, ReportsApiClient>(client =>
                     client.BaseAddress = new Uri(apiBaseUrl))
                 .AddHttpMessageHandler<JwtBearerHandler>();
 

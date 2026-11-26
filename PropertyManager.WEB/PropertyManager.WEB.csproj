@@ -10,6 +10,7 @@
     <ProjectReference Include="..\PropertyManager.API\PropertyManager.API.csproj" />
     <ProjectReference Include="..\PropertyManager.Application\PropertyManager.Application.csproj" />
     <ProjectReference Include="..\PropertyManager.Data\PropertyManager.Data.csproj" />
+    <ProjectReference Include="..\PropertyManager.Reporting\PropertyManager.Reporting.csproj" />
   </ItemGroup>
 
   <ItemGroup>

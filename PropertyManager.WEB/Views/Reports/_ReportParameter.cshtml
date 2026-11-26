@@ -1,0 +1,109 @@
+@model PropertyManager.WEB.ViewModels.Reports.ReportParameterViewModel
+@{
+    var definition = Model.Definition;
+    var choice = Model.ChoiceValue ?? definition.DefaultValue;
+    var fieldId = $"{Model.ReportKey}-{definition.Key}";
+}
+
+<div class="reports-field">
+    <label class="form-label" for="@fieldId">@definition.Label</label>
+
+    @if (definition.Kind == "dateRange")
+    {
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+            <select id="@fieldId" name="periodPreset" class="form-select" data-period-preset>
+                <option value="thisMonth" selected="@(Model.PeriodPreset == "thisMonth" ? "selected" : null)">This month</option>
+                <option value="lastMonth" selected="@(Model.PeriodPreset == "lastMonth" ? "selected" : null)">Last month</option>
+                <option value="thisYear" selected="@(Model.PeriodPreset == "thisYear" ? "selected" : null)">This year</option>
+                <option value="lastYear" selected="@(Model.PeriodPreset == "lastYear" ? "selected" : null)">Last year</option>
+                <option value="custom" selected="@(Model.PeriodPreset == "custom" ? "selected" : null)">Custom</option>
+            </select>
+            <div class="d-flex gap-2 @(Model.PeriodPreset == "custom" ? null : "d-none")" data-period-dates>
+                <div>
+                    <label class="form-label" for="startDate">Start date</label>
+                    <input id="startDate" name="startDate" type="date" class="form-control" data-start-date
+                           value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+                    @if (!string.IsNullOrEmpty(Model.StartError))
+                    {
+                        <div class="text-danger">@Model.StartError</div>
+                    }
+                </div>
+                <div>
+                    <label class="form-label" for="endDate">End date</label>
+                    <input id="endDate" name="endDate" type="date" class="form-control" data-end-date
+                           value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                    @if (!string.IsNullOrEmpty(Model.EndError))
+                    {
+                        <div class="text-danger">@Model.EndError</div>
+                    }
+                </div>
+            </div>
+            <div class="text-muted align-self-center @(Model.PeriodPreset == "custom" ? "d-none" : null)" data-period-summary></div>
+        </div>
+        @if (Model.PeriodPreset != "custom" && (!string.IsNullOrEmpty(Model.StartError) || !string.IsNullOrEmpty(Model.EndError)))
+        {
+            <div class="text-danger">@(Model.StartError ?? Model.EndError)</div>
+        }
+    }
+    else if (definition.Kind == "multiSelect")
+    {
+        var selectedCount = Model.BuildingIds.Count;
+        <div class="reports-multiselect" data-buildings>
+            <button type="button"
+                    id="@fieldId"
+                    class="form-select reports-multiselect-toggle text-start"
+                    data-buildings-toggle
+                    aria-expanded="false"
+                    aria-controls="@(fieldId)-panel">
+                <span data-buildings-summary>@(selectedCount == 1 ? "1 selected" : $"{selectedCount} selected")</span>
+            </button>
+            <div id="@(fieldId)-panel" class="reports-multiselect-panel" data-buildings-panel hidden>
+                <div class="d-flex gap-2 align-items-center mb-2">
+                    <input type="search"
+                           class="form-control form-control-sm"
+                           placeholder="Search"
+                           data-buildings-search
+                           aria-label="Search buildings" />
+                    <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" data-buildings-clear>Clear</button>
+                </div>
+                <div class="reports-multiselect-options">
+                    @foreach (var building in Model.Buildings)
+                    {
+                        <label class="reports-multiselect-option" data-buildings-row>
+                            <input type="checkbox"
+                                   name="buildingIds"
+                                   value="@building.Id"
+                                   data-buildings-option
+                                   data-label="@building.Name"
+                                   checked="@(Model.BuildingIds.Contains(building.Id) ? "checked" : null)" />
+                            <span>@building.Name</span>
+                        </label>
+                    }
+                </div>
+                <div class="text-muted small" data-buildings-empty hidden>No buildings match.</div>
+            </div>
+        </div>
+        <div class="form-text">Leave empty to include all buildings.</div>
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="text-danger">@Model.Error</div>
+        }
+    }
+    else if (definition.Kind == "choice")
+    {
+        <select id="@fieldId"
+                name="parameters[@definition.Key]"
+                class="form-select"
+                data-default="@definition.DefaultValue"
+                disabled="@(Model.Disabled ? "disabled" : null)">
+            @foreach (var option in definition.Options)
+            {
+                <option value="@option.Value" selected="@(string.Equals(option.Value, choice, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">@option.Label</option>
+            }
+        </select>
+        @if (!string.IsNullOrEmpty(Model.Error))
+        {
+            <div class="text-danger">@Model.Error</div>
+        }
+    }
+</div>

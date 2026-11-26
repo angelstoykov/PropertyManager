@@ -135,6 +135,60 @@ namespace PropertyManager.Application.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<IReadOnlyList<BuildingFinancialTotalDto>> GetBuildingTotalsAsync(
+            DateTime startDate,
+            DateTime endDate,
+            IReadOnlyCollection<int>? propertyIds,
+            FinancialRecordType? type)
+        {
+            var start = startDate.Date;
+            var endExclusive = endDate.Date.AddDays(1);
+
+            var query = _context.UnitFinancialRecords
+                .AsNoTracking()
+                .Where(record => record.Date >= start && record.Date < endExclusive);
+
+            if (propertyIds is { Count: > 0 })
+            {
+                var ids = propertyIds.Distinct().ToList();
+                query = query.Where(record => ids.Contains(record.Unit.PropertyId));
+            }
+
+            if (type.HasValue)
+                query = query.Where(record => record.Type == type.Value);
+
+            var grouped = await query
+                .Select(record => new
+                {
+                    PropertyId = record.Unit.PropertyId,
+                    Code = record.Currency.Code,
+                    Symbol = record.Currency.Symbol,
+                    Income = record.Type == FinancialRecordType.Income ? record.Amount : 0m,
+                    Expense = record.Type == FinancialRecordType.Expense ? record.Amount : 0m
+                })
+                .GroupBy(row => new { row.PropertyId, row.Code, row.Symbol })
+                .Select(group => new
+                {
+                    group.Key.PropertyId,
+                    group.Key.Code,
+                    group.Key.Symbol,
+                    Income = group.Sum(row => row.Income),
+                    Expense = group.Sum(row => row.Expense)
+                })
+                .ToListAsync();
+
+            return grouped
+                .Select(row => new BuildingFinancialTotalDto
+                {
+                    PropertyId = row.PropertyId,
+                    CurrencyCode = row.Code,
+                    CurrencySymbol = string.IsNullOrEmpty(row.Symbol) ? row.Code : row.Symbol,
+                    Income = row.Income,
+                    Expense = row.Expense
+                })
+                .ToList();
+        }
+
         private async Task EnsureClientHasUnitAsync(int clientId, int unitId)
         {
             var hasUnit = await _context.Clients
