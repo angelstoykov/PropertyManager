@@ -1,0 +1,148 @@
+@using PropertyManager.Reporting
+@model PropertyManager.WEB.ViewModels.Reports.ReportsPageViewModel
+@{
+    ViewData["Title"] = "Reports";
+    var selected = Model.Catalog.FirstOrDefault(report => report.Key == Model.SelectedKey) ?? Model.Catalog.FirstOrDefault();
+}
+
+<h2>Reports</h2>
+
+@if (Model.Catalog.Count == 0)
+{
+    <div class="alert alert-info">No reports are available.</div>
+}
+else
+{
+    <form asp-action="Index" method="post" id="report-form">
+        <input type="hidden" name="reportKey" id="reportKey" value="@selected?.Key" />
+
+        <div class="card mb-3">
+            <div class="card-body reports-bar">
+                @foreach (var block in Model.CommonParameters)
+                {
+                    <div data-common-for="@string.Join(" ", block.ReportKeys)">
+                        <partial name="_ReportParameter" model="Model.Field(block.Definition, null, false)" />
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="list-group reports-catalog">
+                    @foreach (var group in Model.Catalog.GroupBy(report => report.Category))
+                    {
+                        <div class="list-group-item small text-uppercase text-muted">@group.Key</div>
+                        foreach (var report in group)
+                        {
+                            <button type="button"
+                                    class="list-group-item list-group-item-action @(report.Key == selected?.Key ? "active" : null)"
+                                    data-select-report="@report.Key">
+                                @report.Name
+                            </button>
+                        }
+                    }
+                </div>
+                @if (Model.Errors.TryGetValue("reportKey", out var reportError))
+                {
+                    <div class="text-danger mt-2">@reportError</div>
+                }
+            </div>
+
+            <div class="col-md-9">
+                @foreach (var report in Model.Catalog)
+                {
+                    var active = report.Key == selected?.Key;
+                    <div data-report-panel="@report.Key" hidden="@(!active ? "hidden" : null)">
+                        <h3>@report.Name</h3>
+                        @foreach (var message in Model.ExtraErrors(report))
+                        {
+                            <div class="text-danger">@message</div>
+                        }
+                        <div class="reports-bar mb-3">
+                            @foreach (var parameter in report.Parameters)
+                            {
+                                <partial name="_ReportParameter" model="Model.Field(parameter, report.Key, !active)" />
+                            }
+                            <div class="reports-field">
+                                <button type="submit" class="btn btn-primary" data-generate>Generate</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.Generated && Model.Result is not null)
+                {
+                    var result = Model.Result;
+                    @foreach (var item in result.Header)
+                    {
+                        <p class="mb-1"><strong>@item.Label:</strong> @item.Value</p>
+                    }
+                    <p class="text-muted">@result.AmountBasis</p>
+
+                    @if (!result.HasData)
+                    {
+                        <div class="alert alert-info">@result.EmptyMessage</div>
+                    }
+                    else
+                    {
+                        foreach (var table in result.Tables)
+                        {
+                            <h4 class="mt-4">@table.Title</h4>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            @foreach (var column in table.Columns)
+                                            {
+                                                <th class="@(column.Numeric ? "text-end" : null)">@column.Label</th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var row in table.Rows)
+                                        {
+                                            <tr>
+                                                @foreach (var column in table.Columns)
+                                                {
+                                                    <td class="@(column.Numeric ? "text-end" : null)">@Show(row.GetValueOrDefault(column.Key))</td>
+                                                }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-semibold">
+                                            @foreach (var column in table.Columns)
+                                            {
+                                                <th class="@(column.Numeric ? "text-end" : null)">@Show(table.Totals.GetValueOrDefault(column.Key))</th>
+                                            }
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        }
+                    }
+                }
+            </div>
+        </div>
+    </form>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/reports.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/reports/reports.js" asp-append-version="true"></script>
+}
+
+@functions {
+    string Show(ReportValue? value)
+    {
+        if (value == null)
+            return "";
+        if (value.Amount.HasValue)
+            return value.Amount.Value.ToString("N2");
+        return value.Text ?? "";
+    }
+}

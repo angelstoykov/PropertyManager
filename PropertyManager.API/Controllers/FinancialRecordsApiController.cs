@@ -103,6 +103,55 @@ namespace PropertyManager.API.Controllers
             return NoContent();
         }
 
+        [HttpGet("totals")]
+        public async Task<IActionResult> GetTotals(
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate,
+            [FromQuery] List<int>? propertyIds,
+            [FromQuery] string? type)
+        {
+            if (startDate == default || endDate == default)
+                return BadRequest(new { message = "Start date and end date are required." });
+
+            if (endDate.Date < startDate.Date)
+                return BadRequest(new { message = "End date cannot be before start date." });
+
+            FinancialRecordType? recordType = null;
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                if (!Enum.TryParse<FinancialRecordType>(type, ignoreCase: true, out var parsed)
+                    || parsed is not (FinancialRecordType.Income or FinancialRecordType.Expense))
+                {
+                    return BadRequest(new { message = "Type must be Income or Expense." });
+                }
+
+                recordType = parsed;
+            }
+
+            var totals = await _financialRecordsService.GetBuildingTotalsAsync(
+                startDate,
+                endDate,
+                propertyIds,
+                recordType);
+            return Ok(totals);
+        }
+
+        [HttpGet("unit-income")]
+        public async Task<IActionResult> GetUnitIncome(
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate,
+            [FromQuery] List<int>? propertyIds)
+        {
+            if (startDate == default || endDate == default)
+                return BadRequest(new { message = "Start date and end date are required." });
+
+            if (endDate.Date < startDate.Date)
+                return BadRequest(new { message = "End date cannot be before start date." });
+
+            var totals = await _financialRecordsService.GetUnitIncomeTotalsAsync(startDate, endDate, propertyIds);
+            return Ok(totals);
+        }
+
         private IReadOnlyList<ClientRoleType> CurrentAccess() => ClientAccess.Resolve(User);
     }
 }
